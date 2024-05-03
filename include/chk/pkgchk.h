@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+#define HASH_SIZE 64
+#define BUFFER 1024
+#define FILECHECK_SIZE 16
 
 /**
  * Query object, allows you to assign
@@ -12,12 +15,22 @@
  *    Make sure you deallocate in the destroy function
  */
 struct bpkg_query {
-	char** hashes;
+	char** hashes; //hash[0] contains out of bpkg_file_check()
 	size_t len;
 };
 
-//TODO: Provide a definition
-struct bpkg_obj;
+//bpkg_obj: contains all data from the .bpkg file
+struct bpkg_obj {
+	char* identifier;
+	char* filename;
+	size_t size;
+	size_t len_hash;
+	char** hashes;
+	size_t len_chunk;
+	char** chunks_hash;
+	size_t* chunks_offset;
+	size_t* chunks_size;
+};
 
 
 /**

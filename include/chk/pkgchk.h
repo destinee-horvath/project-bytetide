@@ -2,10 +2,14 @@
 #define PKGCHK_H
 
 #include <stddef.h>
+#include <stdint.h>
 
-#define HASH_SIZE 64
 #define BUFFER 1024
 #define FILECHECK_SIZE 16
+
+#define SIZE_IDENT 1025
+#define SIZE_FILENAME 257
+#define HASH_SIZE 65
 
 /**
  * Query object, allows you to assign
@@ -21,15 +25,16 @@ struct bpkg_query {
 
 //bpkg_obj: contains all data from the .bpkg file
 struct bpkg_obj {
+	char* path;
 	char* identifier;
 	char* filename;
-	size_t size;
-	size_t len_hash;
+	uint32_t size;
+	uint32_t len_hash;
 	char** hashes;
-	size_t len_chunk;
+	uint32_t len_chunk;
 	char** chunks_hash;
-	size_t* chunks_offset;
-	size_t* chunks_size;
+	uint32_t** chunks_offset;
+	uint32_t** chunks_size;
 };
 
 

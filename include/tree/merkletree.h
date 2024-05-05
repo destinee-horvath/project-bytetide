@@ -10,9 +10,9 @@ struct merkle_tree_node {
     void* value;
     struct merkle_tree_node* left;
     struct merkle_tree_node* right;
-    int is_leaf;
-    char expected_hash[SHA256_HEXLEN];
-    char computed_hash[SHA256_HEXLEN];
+    int is_leaf; //1 if leaf otherwise 0
+    char expected_hash[SHA256_HEXLEN+1];
+    char computed_hash[SHA256_HEXLEN+1]; //+1 to account for null character 
 };
 
 

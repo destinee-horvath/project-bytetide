@@ -14,24 +14,23 @@
  * Loads the package for when a valid path is given
  */
 struct bpkg_obj* bpkg_load(const char* path) {
-    //check if file path is valid (by opening an existing package)
-    FILE* file = fopen(path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Error: File path does not exist: %s\n", path);
-        return NULL;
-    }
-
     //dynamically allocate space for obj file
     struct bpkg_obj* obj = malloc(sizeof(struct bpkg_obj));
     if (obj == NULL) {
         fprintf(stderr, "Error: Failed to allocate memory\n");        
-        fclose(file); //close file 
+        // fclose(file); //close file 
         return NULL;
     }
 
-    //initialise values for object file
-    obj->identifier = NULL;
-    obj->filename = NULL;
+    obj->path = strdup(path);
+
+    // //initialise values for object file
+    obj->identifier = malloc((SIZE_IDENT)*sizeof(char));
+    if (obj->identifier == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return NULL;
+    }
+
     obj->size = 0;
     obj->len_hash = 0;
     obj->hashes = NULL; 
@@ -40,19 +39,59 @@ struct bpkg_obj* bpkg_load(const char* path) {
     obj->chunks_offset = 0;
     obj->chunks_size = 0;
 
+    //check if file path is valid (by opening an existing package)
+    FILE* file = fopen(path, "rb");
+    //if file path doesnt exist
+    if (file == NULL) {
+        // fprintf(stderr, "Error: File path does not exist: %s\n", path);
+        
+        char* last_slash;
+        char* last_dot;
+
+        //strip the '/' character
+        last_slash = strrchr(path, '/');
+        if (last_slash != NULL) { //move to last '/'
+            last_slash++;
+        } else { //no '/' found
+            last_slash = (char*)path;
+        }
+
+        char new_filename[SIZE_FILENAME];
+        strcpy(new_filename, last_slash);
+
+        //add '.'
+        last_dot = strrchr(new_filename, '.');
+        if (last_dot != NULL) {
+            *last_dot = '\0'; 
+        }
+
+        strcat(new_filename, ".data");
+
+        obj->filename = strdup(new_filename);
+        return obj;
+    }
+
+    obj->filename = malloc((SIZE_FILENAME+1)*sizeof(char));
+    if (obj->filename == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        free(obj->identifier);
+        return obj;
+    }
+
+    //else file path exists 
     char line[BUFFER];
 
     //check sections of .bpkg file
-    fscanf(file, "ident: %1024s\n", obj->identifier);
-    fscanf(file, "filename: %256s\n", obj->filename);
-    fscanf(file, "size: %zu\n", &obj->size);
-    fscanf(file, "nhashes: %zu\n", &obj->len_hash);
+    fscanf(file, "ident:%1024s\n", obj->identifier);
+    fscanf(file, "filename:%256s\n", obj->filename);
+    fscanf(file, "size:%u\n", &obj->size);
+    fscanf(file, "nhashes:%u\n", &obj->len_hash);
 
     //dynamically allocate space for hash pointers 
     obj->hashes = malloc(obj->len_hash * sizeof(char*));
 
     //read hashes
-    for (size_t i = 0; i < obj->len_hash; i++) {
+    for (size_t i = 0; i < obj->len_hash+1; i++) {
         //read line 
         if (fgets(line, sizeof(line), file) == NULL) {
             fprintf(stderr, "Error: Fail to read line");
@@ -64,9 +103,13 @@ struct bpkg_obj* bpkg_load(const char* path) {
             obj->hashes = NULL;
             break; 
         }
+        if (i == 0) {
+            continue; //skip over hashes: (offset 1)
+        }
+
         //dynamically allocate space for hash
-        obj->hashes[i] = malloc((HASH_SIZE + 1)* sizeof(char)); //+1 to account for null bit
-        if (obj->hashes[i] == NULL) {
+        obj->hashes[i-1] = malloc((HASH_SIZE) * sizeof(char)); //+1 to account for null bit
+        if (obj->hashes[i-1] == NULL) {
             fprintf(stderr, "Error: Failed to allocate memory\n");
             //free other hashes
             for (size_t j = 0; j < i; j++) {
@@ -83,15 +126,21 @@ struct bpkg_obj* bpkg_load(const char* path) {
             start++;        
         }
         //store hash
-        if (sscanf(start, "%64s", obj->hashes[i]) != 1) {
+        if (sscanf(start, "%64s", obj->hashes[i-1]) != 1) {
             fprintf(stderr, "Error: Failed to scan hash\n");
-            free(obj->hashes[i]);
+            free(obj->hashes[i-1]);
         }
-    
     }
 
-    fscanf(file, "nchunks: %zu\n", &obj->len_chunk);
-    for (size_t i = 0; i < obj->len_chunk; i++) {
+
+    fscanf(file, "nchunks: %u\n", &obj->len_chunk);
+
+    //dynamically allocate space for chunk pointers 
+    obj->chunks_hash = malloc((obj->len_chunk) * sizeof(char*));
+    obj->chunks_offset = malloc(obj->len_chunk * sizeof(uint32_t*));  
+    obj->chunks_size = malloc(obj->len_chunk * sizeof(uint32_t*)); 
+
+    for (size_t i = 0; i < obj->len_chunk+1; i++) {
         //read line 
         if (fgets(line, sizeof(line), file) == NULL) {
             fprintf(stderr, "Error: Fail to read line");
@@ -101,11 +150,16 @@ struct bpkg_obj* bpkg_load(const char* path) {
             }
             free(obj->chunks_hash);
             obj->chunks_hash = NULL;
-            break; 
+            break;
         }
+        if (i == 0) {
+            continue; //skip over chunks: (offset 1)
+        }
+
         //dynamically allocate space for hash
-        obj->chunks_hash[i] = malloc((HASH_SIZE + 1)* sizeof(char)); //+1 to account for null bit
-        if (obj->chunks_hash[i] == NULL) {
+        obj->chunks_hash[i-1] = malloc((HASH_SIZE+1)* sizeof(char)); 
+
+        if (obj->chunks_hash[i-1] == NULL) {
             fprintf(stderr, "Error: Failed to allocate memory\n");
             //free other hashes
             for (size_t j = 0; j < i; j++) {
@@ -121,17 +175,40 @@ struct bpkg_obj* bpkg_load(const char* path) {
         while (*start == ' ' || *start == '\t') {
             start++;        
         }
+        //split line by ','
+        char *token_hash, *token_offset, *token_size;
+
         //store hash
-        if (sscanf(start, "%64s", obj->chunks_hash[i]) != 1) {
-            fprintf(stderr, "Error: Failed to scan hash\n");
-            free(obj->chunks_hash[i]);
+        token_hash = strtok(line, ",");
+        if (token_hash == NULL) {
+            fprintf(stderr, "Error: token fail\n");
+            continue;
         }
-    
+        strncpy(obj->chunks_hash[i-1], token_hash, HASH_SIZE);
+        obj->chunks_hash[i-1][HASH_SIZE] = '\0'; //end with null terminator 
+
+        //store offset
+        token_offset = strtok(NULL, ",");
+        if (token_offset == NULL) {
+            fprintf(stderr, "Error: token fail\n");
+            continue;
+        }
+        obj->chunks_offset[i-1] = malloc(sizeof(uint32_t));
+        *obj->chunks_offset[i-1] = (uint32_t)atoi(token_offset);
+
+        //store size
+        token_size = strtok(NULL, ",");
+        if (token_size == NULL) {
+            fprintf(stderr, "Error: token fail\n");
+            continue;
+        }
+        obj->chunks_size[i-1] = malloc(sizeof(uint32_t));
+        *obj->chunks_size[i-1] = (uint32_t)atoi(token_size);
     }
 
     //close file 
     fclose(file);
-
+    
     //returns the allocated space for struct bpkg_obj
     return obj;
 }
@@ -161,13 +238,6 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
         return query_result;
     }
 
-    //check if bpkg->filename exists in folder 
-    struct stat buffer;
-
-    //construct file path 
-    char file_path[BUFFER];
-    snprintf(file_path, sizeof(file_path), "resources/pkgs/%s", bpkg->filename); //to contatenate strings 
-
     //dynamically allocate space for string 
     query_result.hashes[0] = malloc(FILECHECK_SIZE); 
     if (query_result.hashes[0] == NULL) {
@@ -176,25 +246,42 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
         return query_result;  
     }
 
-    //file exists
-    if (stat(file_path, &buffer) == 0) {
-        strcpy(query_result.hashes[0], "File Exists");
-    }
-    //file does not exist
-    else {
-        //create file 
-        FILE *file = fopen(file_path, "w");
-        if (file != NULL) {
-            strcpy(query_result.hashes[0], "File Created");
-            fclose(file);
-        } 
-        else {
-            fprintf(stderr, "Error: Failed to create file\n");
-            free(query_result.hashes);
-            free(query_result.hashes[0]);
+    //check if bpkg->filename exists in folder 
+    struct stat buffer;
+    //construct file path 
+    char file_path[BUFFER];
+
+
+
+    if (bpkg->filename != NULL) {
+        //contatenate strings to create file path 
+        snprintf(file_path, sizeof(file_path), "resources/pkgs/%s", bpkg->filename); 
+        
+        //file exists
+        if (stat(file_path, &buffer) == 0) {
+            strcpy(query_result.hashes[0], "File Exists");
         }
+        //file does not exist
+        else {
+            //use the path provided in arg
+            snprintf(file_path, sizeof(file_path), "%s", bpkg->filename);
+            
+            //create file 
+            FILE *file = fopen(file_path, "w");
+            if (file != NULL) {
+                strcpy(query_result.hashes[0], "File Created");
+                fclose(file);
+            } 
+            else {
+                fprintf(stderr, "Error: Failed to create file\n");
+                free(query_result.hashes);
+                free(query_result.hashes[0]);
+            }
+        }
+
     }
 
+    
     return query_result;
 }
 
@@ -207,13 +294,28 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
 struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
     struct bpkg_query qry = { 0 };
     
-    //check if bpkg package exists 
-
-    //copy number of hashes 
+    //check if bpkg package and hashes exists 
+    if (bpkg == NULL || bpkg->hashes == NULL) {
+        return qry;
+    }
 
     //dynamically allocate memory for hashes 
+    qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
+    if (qry.hashes == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return qry;
+    }
 
     //copy hashes bpkg to qry
+    for (size_t i = 0; i < bpkg->len_hash; i++) {
+        qry.hashes[i] = strdup(bpkg->hashes[i]);
+        
+        if (qry.hashes[i] == NULL) {
+            fprintf(stderr, "Error: cannot copy\n");
+            bpkg_query_destroy(&qry); 
+            break;
+        }
+    }
 
     return qry;
 }
@@ -226,6 +328,30 @@ struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
  */
 struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) { 
     struct bpkg_query qry = { 0 };
+
+    //check if bpkg package and chunks exists 
+    if (bpkg == NULL || bpkg->chunks_hash == NULL) {
+        return qry;
+    }
+
+    //dynamically allocate memory for chunks 
+    qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
+    if (qry.hashes == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return qry;
+    }
+
+    //copy chunks bpkg to qry
+    for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        qry.hashes[i] = strdup(bpkg->chunks_hash[i]);
+        
+        if (qry.hashes[i] == NULL) {
+            fprintf(stderr, "Error: cannot copy\n");
+            bpkg_query_destroy(&qry); 
+            break;
+        }
+    }
+
     return qry;
 }
 
@@ -242,6 +368,22 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
  */
 struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
     struct bpkg_query qry = { 0 };
+
+    if (bpkg == NULL) {
+        return qry;
+    }
+
+    // struct merkle_tree_node* root = build_merkle_tree(bpkg);
+
+    qry.hashes = malloc(sizeof(char*));  
+    if (!qry.hashes) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return qry;
+    }
+
+    //hash complete if computed hash match expected hash ??
+
+
     return qry;
 }
 
@@ -261,6 +403,14 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     char* hash) {
     
     struct bpkg_query qry = { 0 };
+
+    if (bpkg == NULL) {
+        return qry;
+    }
+
+
+
+
     return qry;
 }
 
@@ -278,7 +428,7 @@ void bpkg_query_destroy(struct bpkg_query* qry) {
         free(qry->hashes);
         qry->hashes = NULL;
     }
-    free(qry);
+    // free(qry);
 }
 
 /**
@@ -287,8 +437,9 @@ void bpkg_query_destroy(struct bpkg_query* qry) {
  */
 void bpkg_obj_destroy(struct bpkg_obj* obj) {
     if (obj != NULL) {
+        free(obj->path);
         free(obj->identifier);  
-        free(obj->filename);    
+        free(obj->filename);
         
         //free each hash
         if (obj->hashes != NULL) {
@@ -305,17 +456,20 @@ void bpkg_obj_destroy(struct bpkg_obj* obj) {
                 free(obj->chunks_hash[i]); 
             }
             free(obj->chunks_hash); 
-            obj->chunks_hash = NULL;
         }
 
         if (obj->chunks_offset != NULL) {
-            free(obj->chunks_offset); 
-            obj->chunks_offset = NULL;
+            for (size_t i = 0; i < obj->len_chunk; i++) {
+                free(obj->chunks_offset[i]); 
+            }
+            free(obj->chunks_offset);
         }
 
-        if (obj->chunks_size != NULL) {
-            free(obj->chunks_size);  
-            obj->chunks_size = NULL;
+        if (obj->chunks_hash != NULL) {
+            for (size_t i = 0; i < obj->len_chunk; i++) {
+                free(obj->chunks_size[i]);  
+            }
+            free(obj->chunks_size);
         }
 
         free(obj);  

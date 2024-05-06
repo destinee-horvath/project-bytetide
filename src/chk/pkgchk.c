@@ -175,11 +175,12 @@ struct bpkg_obj* bpkg_load(const char* path) {
         while (*start == ' ' || *start == '\t') {
             start++;        
         }
+        
         //split line by ','
         char *token_hash, *token_offset, *token_size;
 
         //store hash
-        token_hash = strtok(line, ",");
+        token_hash = strtok(start, ",");
         if (token_hash == NULL) {
             fprintf(stderr, "Error: token fail\n");
             continue;
@@ -264,7 +265,7 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
         //file does not exist
         else {
             //use the path provided in arg
-            snprintf(file_path, sizeof(file_path), "%s", bpkg->filename);
+            snprintf(file_path, sizeof(file_path), "resources/pkgs/%s", bpkg->filename);
             
             //create file 
             FILE *file = fopen(file_path, "w");
@@ -293,28 +294,51 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
  */
 struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
     struct bpkg_query qry = { 0 };
+    qry.len = 0; 
     
     //check if bpkg package and hashes exists 
-    if (bpkg == NULL || bpkg->hashes == NULL) {
+    if (bpkg == NULL || bpkg->hashes == NULL || bpkg->chunks_hash == NULL) {
         return qry;
     }
 
     //dynamically allocate memory for hashes 
-    qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
+    qry.hashes = malloc((bpkg->len_hash + bpkg->len_chunk) * sizeof(char*));
     if (qry.hashes == NULL) {
         fprintf(stderr, "Error: Failed to allocate memory\n");
         return qry;
     }
 
+    size_t i, j;
     //copy hashes bpkg to qry
-    for (size_t i = 0; i < bpkg->len_hash; i++) {
+    for (i = 0; i < bpkg->len_hash; i++) {
+        //dynamically allocate memory
         qry.hashes[i] = strdup(bpkg->hashes[i]);
         
         if (qry.hashes[i] == NULL) {
             fprintf(stderr, "Error: cannot copy\n");
-            bpkg_query_destroy(&qry); 
-            break;
+            while (i > 0) {
+                free(qry.hashes[i]);
+                i--;
+            }
+            qry.len = 0;
+            return qry;
         }
+        qry.len++;
+    }   
+
+    //copy chunks bpkg to qry
+    for (j = 0; j < bpkg->len_chunk; j++) {
+        qry.hashes[i + j] = strdup(bpkg->chunks_hash[j]);
+        if (qry.hashes[i + j] == NULL) {
+            fprintf(stderr, "Error: cannot copy\n");
+            while (i > 0) {
+                free(qry.hashes[i]);
+                i--;
+            }
+            qry.len = 0;
+            return qry;
+        }
+        qry.len++;
     }
 
     return qry;

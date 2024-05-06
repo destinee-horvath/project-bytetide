@@ -11,12 +11,22 @@ INCLUDE=-Iinclude
 pkgchk.o: src/chk/pkgchk.c
 	$(CC) -c $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS)
 
-
 pkgchecker: src/pkgmain.c src/chk/pkgchk.c
+	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@ 
+
+pkgmain: src/pkgmain.c src/chk/pkgchk.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
+# ./pkgmain resources/pkgs/file1.bpkg -file_check file1.data
+# ./pkgmain resources/pkgs/file2.bpkg -file_check file2.data
+# ./pkgmain resources/pkgs/file4.bpkg -file_check file4.data
+# ./pkgmain resources/pkgs/file3.bpkg -all_hashes file3.data
+
+merkletree: src/pkgmain.c src/chk/pkgchk.c src/tree/merkletree.c
+	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
+	./pkgmain resources/pkgs/file3.bpkg -hashes_of file3.data
 
 # Required for Part 2 - Make sure it outputs `btide` file
-# in your directory ./
+# in your directory ./	
 btide: src/btide.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
 
@@ -37,5 +47,3 @@ p2tests:
 
 clean:
 	rm -f objs/*
-    
-

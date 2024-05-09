@@ -273,7 +273,7 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
             //create file 
             FILE *file = fopen(file_path, "w");
             if (file != NULL) {
-                strcpy(query_result.hashes[0], "File Created");
+                strcpy(query_result.hashes[0], "File Exists");
                 fclose(file);
             } 
             else {

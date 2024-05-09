@@ -1,5 +1,5 @@
-#include <chk/pkgchk.h>
-#include <crypt/sha256.h>
+#include "chk/pkgchk.h"
+#include "crypt/sha256.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,12 +36,12 @@ int arg_select(int argc, char** argv, int* asel, char* harg) {
 		strncpy(harg, argv[3], SHA256_HEX_LEN);
 	}
 	if(strcmp(cursor, "-file_check") == 0) {
-		if(argc < 4) {
+		if(argc < 3) {
 			puts("filename not provided");
 			exit(1);
 		}
 		*asel = 5;
-		strncpy(harg, argv[3], SHA256_HEX_LEN);
+		// strncpy(harg, argv[3], SHA256_HEX_LEN);
 	}
 	return *asel;
 }
@@ -55,7 +55,7 @@ void bpkg_print_hashes(struct bpkg_query* qry) {
 }
 
 int main(int argc, char** argv) {
-	
+
 	int argselect = 0;
 	char hash[SHA256_HEX_LEN];
 
@@ -94,6 +94,8 @@ int main(int argc, char** argv) {
 			qry = bpkg_file_check(obj);
 			bpkg_print_hashes(&qry);
 			bpkg_query_destroy(&qry);
+
+			
 		} 
         else {
 			puts("Argument is invalid");

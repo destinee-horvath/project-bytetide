@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "crypt/sha256.h"
 
 #define BUFFER 1024
 #define FILECHECK_SIZE 16
@@ -34,7 +35,7 @@ struct bpkg_obj {
 	uint32_t len_chunk;
 	char** chunks_hash;
 	uint32_t** chunks_offset;
-	uint32_t** chunks_size;
+	uint32_t** chunks_size; //in bytes 
 };
 
 

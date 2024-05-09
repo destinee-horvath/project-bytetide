@@ -1,4 +1,6 @@
 #include "chk/pkgchk.h"
+#include "tree/merkletree.h"
+#include "crypt/sha256.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -175,7 +177,7 @@ struct bpkg_obj* bpkg_load(const char* path) {
         while (*start == ' ' || *start == '\t') {
             start++;        
         }
-        
+
         //split line by ','
         char *token_hash, *token_offset, *token_size;
 
@@ -215,6 +217,7 @@ struct bpkg_obj* bpkg_load(const char* path) {
 }
 
 /**
+ * flag: -file_check
  * Checks to see if the referenced filename in the bpkg file
  * exists or not.
  * @param bpkg, constructed bpkg object
@@ -287,6 +290,7 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
 }
 
 /**
+ * flag: -all_hashes
  * Retrieves a list of all hashes within the package/tree
  * @param bpkg, constructed bpkg object
  * @return query_result, This structure will contain a list of hashes
@@ -345,6 +349,7 @@ struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
 }
 
 /**
+ * flag: -chunk_check
  * Retrieves all completed chunks of a package object
  * @param bpkg, constructed bpkg object
  * @return query_result, This structure will contain a list of hashes
@@ -352,6 +357,15 @@ struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
  */
 struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) { 
     struct bpkg_query qry = { 0 };
+
+    printf("bpkg_get_completed_chunks\n");
+
+    struct merkle_tree* tree = build_merkle_tree(bpkg);
+    if (tree == NULL) {
+        printf("res is Null\n");
+        return qry; 
+    }
+    printf("complete %ld\n", tree->n_nodes);
 
     //check if bpkg package and chunks exists 
     if (bpkg == NULL || bpkg->chunks_hash == NULL) {
@@ -367,7 +381,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
     //copy chunks bpkg to qry
     for (size_t i = 0; i < bpkg->len_chunk; i++) {
-        qry.hashes[i] = strdup(bpkg->chunks_hash[i]);
+        qry.hashes[i] = strdup(bpkg->chunks_hash[i]);  //this is an error
         
         if (qry.hashes[i] == NULL) {
             fprintf(stderr, "Error: cannot copy\n");
@@ -375,12 +389,15 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
             break;
         }
     }
+    
+    destroy_tree(tree);
 
     return qry;
 }
 
 
 /**
+ * flag: -min_hashes
  * Gets the mininum of hashes to represented the current completion state
  * Example: If chunks representing start to mid have been completed but
  * 	mid to end have not been, then we will have (N_CHUNKS/2) + 1 hashes
@@ -407,7 +424,6 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
     //hash complete if computed hash match expected hash ??
 
-
     return qry;
 }
 
@@ -431,9 +447,6 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     if (bpkg == NULL) {
         return qry;
     }
-
-
-
 
     return qry;
 }

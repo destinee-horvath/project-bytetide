@@ -14,16 +14,17 @@ pkgchk.o: src/chk/pkgchk.c
 pkgchecker: src/pkgmain.c src/chk/pkgchk.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@ 
 
-pkgmain: src/pkgmain.c src/chk/pkgchk.c
+pkgmain: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
-# ./pkgmain resources/pkgs/file1.bpkg -file_check file1.data
+	./pkgmain resources/pkgs/file1.bpkg -file_check file1.data
 # ./pkgmain resources/pkgs/file2.bpkg -file_check file2.data
 # ./pkgmain resources/pkgs/file4.bpkg -file_check file4.data
 # ./pkgmain resources/pkgs/file3.bpkg -all_hashes file3.data
+	./pkgmain 3_complete/complete_1.bpkg -all_hashes file3.data > someOut.txt
 
-merkletree: src/pkgmain.c src/chk/pkgchk.c src/tree/merkletree.c
+merkletree: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
-	./pkgmain resources/pkgs/file3.bpkg -hashes_of file3.data
+	./pkgmain 3_complete/complete_1.bpkg -chunk_check complete_1.dat > someOut.txt
 
 # Required for Part 2 - Make sure it outputs `btide` file
 # in your directory ./	

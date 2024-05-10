@@ -13,41 +13,20 @@
 /**
  * Calculate hash value 
 */
-void compute_hash(struct merkle_tree_node* node) {
-    if (node == NULL) {
-        return;
-    }
-
+void compute_hash(uint8_t* data, size_t size, char* output) {
+    //initialize hash
     struct sha256_compute_data sha_hash;
+    sha256_compute_data_init(&sha_hash);
 
-    //initialise hash
-    sha256_compute_data_init(&sha_hash); 
+    //update hash
+    sha256_update(&sha_hash, (void*)data, size);
 
-    //node is leaf
-    if (node->is_leaf) {
-        //hash value
-        sha256_update(&sha_hash, node->expected_hash, sizeof(node->expected_hash));
-    }
+    //finalize hash
+    sha256_finalize(&sha_hash, (uint8_t*)output);
 
-    //node is not a leaf 
-    else {
-        //concatenate child hashes 
-        unsigned char temp_hash[2 * SHA256_HEXLEN + 1];  //+1 to account for null char
-        
-        int index = 0;
-        if (node->left != NULL) {
-            memcpy(temp_hash + index, node->left->computed_hash, SHA256_HEXLEN);
-            index += SHA256_HEXLEN; //prevent overlap if right child exists
-        }
-        if (node->right !=NULL) {
-            memcpy(temp_hash + index, node->right->computed_hash, SHA256_HEXLEN);
-        }
-        sha256_update(&sha_hash, temp_hash, 2 * SHA256_HEXLEN);
-
-    }
-
-    // sha256_finalize(&sha_hash, node->computed_hash);
-    // sha256_output_hex(&sha_hash, node->computed_hash);
+    //output as hex
+    sha256_output_hex(&sha_hash, output);
+    output[SHA256_HEXLEN+1] = '\0';  //terminate with null 
 }
 
 /**
@@ -81,15 +60,27 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
         return NULL;
     }    
 
-    char file_path[BUFFER];
-    snprintf(file_path, sizeof(file_path), "resources/pkgs/%s", bpkg->filename); 
+    //construct file_path
+    char *rm_last_file = strrchr(bpkg->path, '/');
+    char file_path[BUFFER]; 
+
+    if (rm_last_file != NULL) {
+        int len_dir = rm_last_file - bpkg->path + 1; //+1 to include '/'
+        strncpy(file_path, bpkg->path, len_dir); 
+        file_path[len_dir] = '\0'; 
+        strncat(file_path, bpkg->filename, BUFFER - strlen(file_path) - 1);
+    } 
+    else {
+        strncpy(file_path, bpkg->filename, BUFFER - 1); 
+        file_path[BUFFER - 1] = '\0'; 
+    }
 
     //read .data 
     FILE *file = fopen(file_path, "rb");
     if (file == NULL) {
         fprintf(stderr, "Error: Failed to open .data file with filename %s\n", bpkg->filename);
         return NULL;
-    }
+    } 
 
     // //get size of file 
     // struct stat sb;
@@ -111,15 +102,10 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
         current_nodes[i] = make_node(NULL, NULL, 1);
     }
 
-    for (size_t i = 0; i < bpkg->len_chunk; i++) {
-        printf("CHUNK SIZE: %ls\n", bpkg->chunks_size[i]);
-    }
-    
-
     //iterate through file and make nodes
     for (size_t i = 0; i < bpkg->len_chunk; i++) {
         //dynamically allocate memory to store hash pointer (malloc(bytes))
-        char* hash_buffer = malloc(*bpkg->chunks_size[i] + 1);
+        uint8_t* hash_buffer = malloc(*bpkg->chunks_size[i] + 1);
         if (hash_buffer == NULL) {
             fprintf(stderr, "Error: Failed to allocate memory\n");
             for (size_t k = 0; k <= i; k++) {
@@ -157,13 +143,8 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
         //add null terminator
         hash_buffer[(size_t)*bpkg->chunks_size[i]] = '\0';
 
-        //store in node
-        strncpy(current_nodes[i]->computed_hash, hash_buffer, SHA256_HEXLEN);
-        current_nodes[i]->computed_hash[SHA256_HEXLEN] = '\0';  //terminate hash with null character 
-
-        //compute hash read
-        compute_hash(current_nodes[i]);
-
+        //compute hash and store   
+        compute_hash(hash_buffer, (size_t)bpkg->chunks_size[i], current_nodes[i]->computed_hash); 
         free(hash_buffer);
     }
 
@@ -188,15 +169,26 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
             struct merkle_tree_node* parent = make_node(NULL, NULL, 0);
 
             parent->left = current_nodes[i];
-            parent->right = NULL;      
-
-            //if right child exists
-            if (i + 1 < num_nodes_level) {
-                parent->right = current_nodes[i + 1];
+            if (parent->left != NULL) {  
+                parent->left->parent = parent;
             }
 
-            compute_hash(parent);
+            parent->right = NULL;
+            if (i + 1 < num_nodes_level) {
+                parent->right = current_nodes[i + 1];
+                if (parent->right) {
+                    parent->right->parent = parent;
+                }
+            }
+
             parent_nodes[j] = parent;
+
+            //to calculate hash 
+            char concat[2 * SHA256_HEXLEN + 1];
+            sprintf(concat, "%s%s", parent->left->computed_hash, parent->right->computed_hash);
+            
+            compute_hash((uint8_t*)concat, strlen(concat), parent->computed_hash);
+
             count++;
         }
 
@@ -277,6 +269,7 @@ void destroy_tree_node(struct merkle_tree_node* node) {
     destroy_tree_node(node->left);
     destroy_tree_node(node->right);
 
+    // free(node->computed_hash); 
     free(node);
 }
 
@@ -298,9 +291,31 @@ void in_order_traversal(struct merkle_tree_node* node) {
 } 
 
 /**
- * Inserts nodes into merkle tree 
+ * Returns all the computed hashes of leaf nodes
 */
+void get_leaf_nodes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* count) {
+    if (node == NULL) {
+        return; 
+    }
 
+    if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
+        printf("%ld %s\n",*count, node->computed_hash);
+        // strdup(*leaf_nodes[*count], node->computed_hash); 
+        (*leaf_nodes)[*count] = strdup(node->computed_hash);    
+        (*count)++;
+        return;
+    }
+
+    ///traverse left 
+    get_leaf_nodes(node->left, leaf_nodes, count);
+
+    //traverse right
+    get_leaf_nodes(node->right, leaf_nodes, count);
+} 
+ 
 /**
- * Deletes nodes from merkle tree 
+ * Returns root of subtree with correct hash 
 */
+void get_root_complete_subtree(struct merkle_tree_node* node, char*** all_nodes, size_t* count) {
+
+}

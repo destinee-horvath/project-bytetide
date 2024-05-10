@@ -44,6 +44,8 @@ static const uint32_t k[SHA256K] = {
 
 //Initialisation From: https://en.wikipedia.org/wiki/SHA-2#Pseudocode
 //and https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//uses predefined initial values for hash 
 void sha256_compute_data_init(struct sha256_compute_data* data) {
 	data->hcomps[0] = 0x6a09e667;
 	data->hcomps[1] = 0xbb67ae85;
@@ -61,6 +63,8 @@ void sha256_compute_data_init(struct sha256_compute_data* data) {
 
 //Derived from: https://en.wikipedia.org/wiki/SHA-2#Pseudocode
 //And https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//calculate hash for given data 
 void sha256_calculate_chunk(struct sha256_compute_data *data, 
 		uint8_t chunk[SHA256_CHUNK_SZ]) {
 	uint32_t w[SHA256_CHUNK_SZ];
@@ -131,6 +135,8 @@ void sha256_calculate_chunk(struct sha256_compute_data *data,
 
 //Derived from: https://en.wikipedia.org/wiki/SHA-2#Pseudocode
 //And https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//futher updates the hash 
 void sha256_update(struct sha256_compute_data *data, 
 		void *bytes, uint32_t size) {
 	
@@ -163,6 +169,8 @@ void sha256_update(struct sha256_compute_data *data,
 
 //Derived from: https://en.wikipedia.org/wiki/SHA-2#Pseudocode
 //And https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//add padding 
 void sha256_finalize(struct sha256_compute_data *data, 
 		uint8_t hash[SHA256_INT_SZ]) {
 	
@@ -193,6 +201,8 @@ void sha256_finalize(struct sha256_compute_data *data,
 }
 
 //Original: https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//convert hash into a byte array representing the hash value
 void sha256_output(struct sha256_compute_data* data, 
 		uint8_t* hash) {
 	for (uint32_t i = 0; i < 8; i++) {
@@ -204,6 +214,8 @@ void sha256_output(struct sha256_compute_data* data,
 }
 
 //Original: https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//convert binary data into hex
 static void bin_to_hex(const void* data, uint32_t len, char* out) {
     
 	static const char* const lut = "0123456789abcdef";
@@ -216,6 +228,8 @@ static void bin_to_hex(const void* data, uint32_t len, char* out) {
 }
 
 //Original: https://github.com/LekKit/sha256/blob/master/sha256.c
+
+//compute hash of data and converts the resulting hash value into a hexadecimal string representation
 void sha256_output_hex(struct sha256_compute_data* data, 
 		char hexbuf[SHA256_CHUNK_SZ]) {
 	uint8_t hash[32] = { 0 };

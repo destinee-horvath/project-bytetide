@@ -12,6 +12,7 @@ struct merkle_tree_node {
     void* value;
     struct merkle_tree_node* left;
     struct merkle_tree_node* right;
+    struct merkle_tree_node* parent;
     int is_leaf; //1 if leaf otherwise 0
     char expected_hash[SHA256_HEXLEN+1];
     char computed_hash[SHA256_HEXLEN+1]; //+1 to account for null character 
@@ -23,7 +24,9 @@ struct merkle_tree {
     size_t n_nodes; //number of nodes in tree including root 
 };
 
-void compute_hash(struct merkle_tree_node*);
+struct bpkg_obj;  
+
+void compute_hash(uint8_t* , size_t , char* ); 
 
 struct merkle_tree_node* make_node(void* , void* , int);
 
@@ -36,6 +39,10 @@ void destroy_tree_node(struct merkle_tree_node*);
 size_t verify_level(size_t , size_t);
 
 size_t verify_tree(size_t , size_t);
+
+void get_leaf_nodes(struct merkle_tree_node*, char***, size_t*);
+
+void get_root_complete_subtree(struct merkle_tree_node* , char*** , size_t* );
 
 
 #endif

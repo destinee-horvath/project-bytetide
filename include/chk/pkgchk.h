@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "crypt/sha256.h"
+#include "tree/merkletree.h"
 
 #define BUFFER 1024
 #define FILECHECK_SIZE 16
@@ -38,6 +39,7 @@ struct bpkg_obj {
 	uint32_t** chunks_size; //in bytes 
 };
 
+struct merkle_tree_node;
 
 /**
  * Loads the package for when a value path is given
@@ -70,6 +72,10 @@ struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg);
  * 		and the number of hashes that have been retrieved
  */
 struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg);
+
+
+//helper function for bpkg_get_completed_chunks to traverse tree 
+void inorder_completed_chunks(struct merkle_tree_node* node, struct bpkg_query* qry);
 
 
 /**

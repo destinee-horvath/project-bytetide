@@ -1,5 +1,6 @@
 #include "chk/pkgchk.h"
 #include "crypt/sha256.h"
+#include "tree/merkletree.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -261,13 +261,15 @@ void get_leaf_hashes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* 
     }
 
     if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
-        printf("%ld %s\n",*count, node->computed_hash);
-        // strdup(*leaf_nodes[*count], node->computed_hash); 
-        (*leaf_nodes)[*count] = strdup(node->computed_hash);    
+        (*leaf_nodes)[*count] = strdup(node->computed_hash);
+        if ((*leaf_nodes)[*count] == NULL) {
+            fprintf(stderr, "Error: Memory allocation failed\n");
+            return;
+        }
         (*count)++;
         return;
     }
-
+ 
     ///traverse left 
     get_leaf_hashes(node->left, leaf_nodes, count);
 
@@ -281,13 +283,13 @@ void get_leaf_hashes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* 
 void get_leaf_nodes(struct merkle_tree_node* node, struct merkle_tree_node*** leaf_nodes, size_t* count) {
     if (node == NULL) {
         return; 
-    }
+    } 
 
     if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
         // printf("%ld %s\n",*count, node->computed_hash);
         // strdup(*leaf_nodes[*count], node->computed_hash); 
 
-        //*(leaf_nodes->computed_hash) = strdup(node->computed_hash);    
+        strcpy((*leaf_nodes[*count])->computed_hash, node->computed_hash);    
         (*count)++;
         return;
     }

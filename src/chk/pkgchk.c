@@ -425,38 +425,51 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
     //root doesnt match -> traverse tree and return chunks that match (check leaf nodes)
     else {
-        printf("incomplete\n");
         qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
         qry.len = 0;
 
         char** all_leafs = malloc(bpkg->len_chunk * sizeof(char*));
+        if (all_leafs == NULL) {
+            fprintf(stderr, "Error: Memory allocation failed");
+            return qry;
+        }
+
+        // for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        //     all_leafs[i] = malloc(HASH_SIZE * sizeof(char));
+        //     if (all_leafs[i] == NULL) {
+        //         fprintf(stderr, "Error: Memory allocation failed");
+        //         return qry;
+        //     }
+        // }
 
         size_t tmp_count = 0;
         get_leaf_hashes(tree->root, &all_leafs, &tmp_count);
-
+ 
         //compare bpkg->chunks with all_leafs
         size_t count = 0;
 
         //iterate bpkg->hashes
         for (size_t i = 0; i < bpkg->len_chunk; i++) {
-            //iterate all_leafs
+            //iterate all_leafs 
             for (size_t j = 0; j < bpkg->len_chunk; j++) {
                 if (strcmp(bpkg->chunks_hash[i], all_leafs[j]) == 0) {  //leaves should be same order as chunks same order as chunks
                     //realloc qry.hash to tmp space  
                     char** tmp = realloc(qry.hashes, (count + 1) * sizeof(char*));
-                    if (tmp == NULL) {
+                    if (tmp == NULL) { 
                         fprintf(stderr, "Error: Memory allocation failed\n");
                         break;
-                    }
+                    } 
+
                     //allocate space
                     qry.hashes = tmp;
 
                     //dynamically allocate space for hash 
                     qry.hashes[count] = malloc(HASH_SIZE * sizeof(char));
-                    if (qry.hashes[count] == NULL) {
+                    if (qry.hashes[count] == NULL) { 
                         fprintf(stderr, "Error: Memory allocation failed\n");
                         break;
                     }
+
                     //copy
                     strcpy(qry.hashes[count], all_leafs[j]);
                     count++;
@@ -472,6 +485,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
         free(all_leafs);
 
         qry.len = count;
+
     }
 
     destroy_tree(tree);
@@ -505,40 +519,68 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
         return qry;
     }
 
-    // struct merkle_tree* tree = build_merkle_tree(bpkg);
+    //dynamically allocate space to store child nodes 
+    struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+    if (!child_nodes) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return qry; 
+    } 
+
+    //make nodes for leaves
+    for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        child_nodes[i] = make_node(NULL, NULL, 1);
+        if (child_nodes[i] == NULL) {
+            return qry;
+        }
+    }
+
+    //read data into space allocated to child nodes
+    read_data(&child_nodes, bpkg);
+
+    //dynamically allocate space to store tree 
+    struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
+    if (!tree) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        for (size_t k = 0; k <= (bpkg->len_chunk+bpkg->len_hash); k++) {
+            destroy_tree_node(child_nodes[k]);
+        }
+        free(child_nodes);
+        return qry;
+    }
+
+    //build tree 
+    build_merkle_tree(child_nodes, bpkg, &tree);
     
-    // //if root is correct, everything else must be correct 
-    // if (strcmp(tree->root->computed_hash, bpkg->hashes[0]) == 0) {
-    //     qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
-    //     if (qry.hashes == NULL) {
-    //         fprintf(stderr, "Error: Memory allocation failed");
-    //         return qry;
-    //     }
-    //     //copy bpkg chunks to hash 
-    //     for (size_t i = 0; i < bpkg->len_chunk; i++) {
-    //         qry.hashes[i] = malloc(HASH_SIZE);
-    //         qry.hashes[i] = bpkg->chunks_hash[i];
-    //     }
-    //     qry.len = bpkg->len_chunk;
-    // }
+    //if root is correct, everything else must be correct 
+    if (strcmp(tree->root->computed_hash, bpkg->hashes[0]) == 0) {
+        qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
+        if (qry.hashes == NULL) {
+            fprintf(stderr, "Error: Memory allocation failed");
+            return qry;
+        }
 
-    // //traverse tree (a computed chunk (child) must be incorrect)
-    // else {
-    //     qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
-    //     qry.len = 0;
+        //copy root
+        qry.hashes[0] = strdup(bpkg->chunks_hash[0]);
+        qry.len = 1;
+    }
 
-    //     char** hash_result = malloc(HASH_SIZE);
-    //     struct bpkg_query all_hash_qry = bpkg_get_all_hashes(bpkg);
-    //     get_root_complete_subtree(tree->root, &all_hash_qry, &hash_result);
+    //traverse tree (a computed chunk (child) must be incorrect)
+    else {
+        qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
+        qry.len = 0;
 
-    //     bpkg_query_destroy(&all_hash_qry);
+        char** hash_result = malloc(HASH_SIZE);
+        struct bpkg_query all_hash_qry = bpkg_get_all_hashes(bpkg);
+        get_root_complete_subtree(tree->root, &all_hash_qry, &hash_result);
 
-    //     //copy from hash result to qry->hashes 
-    //     //free hash result
-    //     //NOTE MALLOC NEEDS TO BE FIXED 
-    // }   
+        bpkg_query_destroy(&all_hash_qry);
 
-    // destroy_tree(tree);
+        //copy from hash result to qry->hashes 
+        //free hash result
+        //NOTE MALLOC NEEDS TO BE FIXED 
+    }   
+
+    destroy_tree(tree);
     return qry;
 }
 

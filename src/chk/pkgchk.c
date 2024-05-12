@@ -536,7 +536,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
     //read data into space allocated to child nodes
     read_data(&child_nodes, bpkg);
-
+ 
     //dynamically allocate space to store tree 
     struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
     if (!tree) {
@@ -654,16 +654,16 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     }
 
     else { 
-        qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
+        qry.hashes = malloc((bpkg->len_chunk) * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 
         //traverse 
-        traverse_subtree(root_hash, &hash_result, &count);
+        find_subtree_chunks(root_hash, &hash_result, &count);
 
         //copy
         for (size_t i = 0; i < count; i++) {
-            qry.hashes[i] = strdup(hash_result[i]);
+            qry.hashes[i] = strdup(hash_result[i]); 
             qry.len++;
         }
 
@@ -673,7 +673,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         }
         free(hash_result);
     }
-
+ 
     return qry;
 }
 

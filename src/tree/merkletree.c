@@ -298,8 +298,8 @@ void get_root_complete_subtree(struct merkle_tree_node* node, char*** result, si
     //traverse left 
     get_root_complete_subtree(node->left, result, count, bpkg);
 
-    //check if hash exists 
-    if (hash_exists(node->computed_hash, bpkg)) {
+    //check if hash isnt leaf and exists 
+    if (node->is_leaf != 1 && hash_exists(node->computed_hash, bpkg)) {
         traverse_subtree(node, result, count);
         return;
     }
@@ -316,7 +316,7 @@ size_t hash_exists(char* hash, struct bpkg_obj* bpkg) {
             return 1;
         }
     }
-    
+
     //check if leaf 
     for (size_t i = 0; i < bpkg->len_chunk; i++) {
         if (strncmp(hash, bpkg->chunks_hash[i], HASH_SIZE-1) == 0) {
@@ -366,4 +366,27 @@ void traverse_subtree(struct merkle_tree_node* node, char*** hashes, size_t* cou
 
     //traverse right 
     traverse_subtree(node->right, hashes, count);
+}
+
+void find_subtree_chunks(struct merkle_tree_node* node, char*** hashes, size_t* count) {
+    if (node == NULL) {
+        return;
+    }
+
+    //traverse left 
+    find_subtree_chunks(node->left, hashes, count);
+
+    if (node->is_leaf == 1) {
+        char** new_hashes = realloc(*hashes, (*count + 1) * sizeof(char*));
+        if (new_hashes == NULL) {
+            fprintf(stderr, "Error: Fail to allocate memory\n");
+            return;
+        }
+        *hashes = new_hashes;
+        (*hashes)[*count] = strdup(node->computed_hash); //duplicate hash 
+        (*count)++;
+    }
+
+    //traverse right 
+    find_subtree_chunks(node->right, hashes, count);
 }

@@ -140,7 +140,7 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
             if (i + 1 < num_nodes_level) {
                 parent->right = current_nodes[i + 1];
                 if (parent->right) {
-                    parent->right->parent = parent;
+                    parent->right->parent = parent; 
                 }
             }
 

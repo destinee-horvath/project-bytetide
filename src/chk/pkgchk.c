@@ -447,7 +447,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
                 qry.hashes = tmp;
 
                 //dynamically allocate space for hash 
-                qry.hashes[count] = malloc(HASH_SIZE);
+                qry.hashes[count] = malloc(HASH_SIZE * sizeof(char));
                 if (qry.hashes[count] == NULL) {
                     fprintf(stderr, "Error: Memory allocation failed\n");
                     break;
@@ -463,6 +463,8 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
             free(all_leafs[i]);
         }
         free(all_leafs);
+
+        qry.len = count+1;
     }
 
     destroy_tree(tree);

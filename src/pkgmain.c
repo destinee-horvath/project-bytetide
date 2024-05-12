@@ -44,6 +44,9 @@ int arg_select(int argc, char** argv, int* asel, char* harg) {
 		*asel = 5;
 		// strncpy(harg, argv[3], SHA256_HEX_LEN);
 	}
+	if (strcmp(cursor, "-everything") == 0) {
+		*asel = 6;
+	}
 	return *asel;
 }
 
@@ -51,8 +54,11 @@ int arg_select(int argc, char** argv, int* asel, char* harg) {
 void bpkg_print_hashes(struct bpkg_query* qry) {
 	for(int i = 0; i < qry->len; i++) {
 		printf("%.64s\n", qry->hashes[i]);
-	}
-	
+	}	
+}
+
+void bpkg_print_all(struct bpkg_obj* obj) {
+
 }
 
 int main(int argc, char** argv) {
@@ -96,12 +102,15 @@ int main(int argc, char** argv) {
 			bpkg_print_hashes(&qry);
 			bpkg_query_destroy(&qry);
 
-			
 		} 
+		else if (argselect == 6) {
+			//for testcases
+		}
         else {
 			puts("Argument is invalid");
 			return 1;
 		}
+
 		bpkg_obj_destroy(obj);
 
 	}

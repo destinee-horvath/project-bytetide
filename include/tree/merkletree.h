@@ -26,11 +26,15 @@ struct merkle_tree {
 
 struct bpkg_obj;  
 
+struct bpkg_query;
+
 void compute_hash(uint8_t* , size_t , char* ); 
 
 struct merkle_tree_node* make_node(void* , void* , int);
 
-struct merkle_tree* build_merkle_tree(struct bpkg_obj*);
+void read_data(struct merkle_tree_node***, struct bpkg_obj*);
+
+void build_merkle_tree(struct merkle_tree_node**, struct bpkg_obj*, struct merkle_tree** );
 
 void destroy_tree(struct merkle_tree*);
 
@@ -40,9 +44,11 @@ size_t verify_level(size_t , size_t);
 
 size_t verify_tree(size_t , size_t);
 
-void get_leaf_nodes(struct merkle_tree_node*, char***, size_t*);
+void get_leaf_hashes(struct merkle_tree_node*, char***, size_t*);
 
-void get_root_complete_subtree(struct merkle_tree_node* , char*** , size_t* );
+void get_leaf_nodes(struct merkle_tree_node*, struct merkle_tree_node***, size_t*);
+
+void get_root_complete_subtree(struct merkle_tree_node* , struct bpkg_query* , char*** );
 
 
 #endif

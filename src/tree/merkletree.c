@@ -45,7 +45,7 @@ struct merkle_tree_node* make_node(void* key, void* value, int is_leaf) {
     node->left = NULL;
     node->right = NULL;
 
-    //initialise hash to 0
+    //initialise to 0
     memset(node->computed_hash, 0, sizeof(node->computed_hash)); 
     memset(node->expected_hash, 0, sizeof(node->expected_hash)); 
 
@@ -53,13 +53,9 @@ struct merkle_tree_node* make_node(void* key, void* value, int is_leaf) {
 }
 
 /**
- * Constructs merkle tree (bottom up approach)
+ * Reads .data file
 */
-struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
-    if (bpkg == NULL || bpkg->hashes == NULL) {
-        return NULL;
-    }    
-
+void read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg) {
     //construct file_path
     char *rm_last_file = strrchr(bpkg->path, '/');
     char file_path[BUFFER]; 
@@ -79,78 +75,45 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
     FILE *file = fopen(file_path, "rb");
     if (file == NULL) {
         fprintf(stderr, "Error: Failed to open .data file with filename %s\n", bpkg->filename);
-        return NULL;
-    } 
-
-    // //get size of file 
-    // struct stat sb;
-    // if (fstat(file, &sb) == -1) {
-    //     fprintf(stderr, "Error: Failed to get file size\n");
-    //     fclose(file);
-    //     return NULL;
-    // }
-
-    //dynamically allocate memory to store all nodes on last level of tree 
-    struct merkle_tree_node** current_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
-    if (!current_nodes) {
-        fprintf(stderr, "Error: Failed to allocate memory\n");
-        return NULL;
-    }
-
-    //make nodes for leaves
-    for (size_t i = 0; i < bpkg->len_chunk; i++) {
-        current_nodes[i] = make_node(NULL, NULL, 1);
-    }
-
-    //iterate through file and make nodes
-    for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        return;
+    }  
+    //iterate through file and make nodes 
+    for (size_t i = 0; i < bpkg->len_chunk; i++) { 
         //dynamically allocate memory to store hash pointer (malloc(bytes))
-        uint8_t* hash_buffer = malloc(*bpkg->chunks_size[i] + 1);
+        uint8_t* hash_buffer = malloc(*bpkg->chunks_size[i]);
         if (hash_buffer == NULL) {
             fprintf(stderr, "Error: Failed to allocate memory\n");
             for (size_t k = 0; k <= i; k++) {
-                destroy_tree_node(current_nodes[k]);
+                destroy_tree_node(*current_nodes[k]);
             }
-            free(current_nodes);
+            free(*current_nodes);
             fclose(file);
-            return NULL;
+            return;
         }
 
-        //go to correct offset
-        if (fseek(file, (size_t)*bpkg->chunks_offset[i], SEEK_SET) != 0) {
-            fprintf(stderr, "Error: fseek failed\n");
-            free(hash_buffer);
-            for (size_t k = 0; k <= i; k++) {
-                destroy_tree_node(current_nodes[k]);
-            }
-            free(current_nodes);
-            fclose(file);
-            return NULL;
-        }
-
-        //read data of size 
-        if (fread(hash_buffer, 1, (size_t)*bpkg->chunks_size[i], file) != (size_t)*bpkg->chunks_size[i]) {
-            fprintf(stderr, "Error: fread failed\n");
-            free(hash_buffer);
-            for (size_t k = 0; k <= i; k++) {
-                destroy_tree_node(current_nodes[k]);
-            }
-            free(current_nodes);
-            fclose(file);
-            return NULL;
-        }
+        //read data of size (doesnt include null byte)
+        fread(hash_buffer, 1, (size_t)*bpkg->chunks_size[i], file);
 
         //add null terminator
-        hash_buffer[(size_t)*bpkg->chunks_size[i]] = '\0';
+        // hash_buffer[(size_t)*bpkg->chunks_size[i]] = '\0';   
 
         //compute hash and store   
-        compute_hash(hash_buffer, (size_t)bpkg->chunks_size[i], current_nodes[i]->computed_hash); 
+        compute_hash(hash_buffer, (size_t)*bpkg->chunks_size[i], (*current_nodes)[i]->computed_hash);
+
         free(hash_buffer);
     }
+}
 
+/**
+ * Constructs merkle tree (bottom up approach) from a list of chunks 
+*/
+void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj* bpkg, struct merkle_tree** tree) {
+
+    //variables used to determine if tree is valid 
     size_t num_nodes_level = bpkg->len_chunk; //to store num nodes on a level
     size_t num_nodes = bpkg->len_chunk;
     size_t level = (size_t)(log2((size_t)bpkg->len_chunk)) + 1; //calculate height of tree 
+    
 
     struct merkle_tree_node** parent_nodes = NULL;
 
@@ -189,6 +152,7 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
             
             compute_hash((uint8_t*)concat, strlen(concat), parent->computed_hash);
 
+            // printf("Parent: %s\n", parent->computed_hash);
             count++;
         }
 
@@ -209,27 +173,25 @@ struct merkle_tree* build_merkle_tree(struct bpkg_obj* bpkg) {
     }
 
     //dynamically allocate memory for tree 
-    struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
-    if (!tree) {
-        fprintf(stderr, "Error: Failed to allocate memory\n");
-        for (size_t k = 0; k <= (bpkg->len_chunk+bpkg->len_hash); k++) {
-            destroy_tree_node(current_nodes[k]);
-        }
-        free(current_nodes);
-        return NULL;
-    }
+    // struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
+    // if (!tree) {
+    //     fprintf(stderr, "Error: Failed to allocate memory\n");
+    //     for (size_t k = 0; k <= (bpkg->len_chunk+bpkg->len_hash); k++) {
+    //         destroy_tree_node(current_nodes[k]);
+    //     }
+    //     free(current_nodes);
+    //     return;
+    // }
 
-    tree->root = current_nodes[0]; //last is root 
-    tree->n_nodes = num_nodes; 
+    (*tree)->root = current_nodes[0]; //last is root 
+    (*tree)->n_nodes = num_nodes; 
     
 
     //verify merkle tree construction (pass in expected height)
     verify_tree(num_nodes, (size_t)(log2(bpkg->len_chunk)) + 1);
    
-    fclose(file);
     free(current_nodes);
 
-    return tree;
 }
 
 /**
@@ -293,7 +255,7 @@ void in_order_traversal(struct merkle_tree_node* node) {
 /**
  * Returns all the computed hashes of leaf nodes
 */
-void get_leaf_nodes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* count) {
+void get_leaf_hashes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* count) {
     if (node == NULL) {
         return; 
     }
@@ -307,15 +269,45 @@ void get_leaf_nodes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* c
     }
 
     ///traverse left 
+    get_leaf_hashes(node->left, leaf_nodes, count);
+
+    //traverse right
+    get_leaf_hashes(node->right, leaf_nodes, count);
+} 
+ 
+/**
+ * Returns all the nodes of leaf nodes
+*/
+void get_leaf_nodes(struct merkle_tree_node* node, struct merkle_tree_node*** leaf_nodes, size_t* count) {
+    if (node == NULL) {
+        return; 
+    }
+
+    if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
+        printf("%ld %s\n",*count, node->computed_hash);
+        // strdup(*leaf_nodes[*count], node->computed_hash); 
+
+        //*(leaf_nodes->computed_hash) = strdup(node->computed_hash);    
+        (*count)++;
+        return;
+    }
+
+    ///traverse left 
     get_leaf_nodes(node->left, leaf_nodes, count);
 
     //traverse right
     get_leaf_nodes(node->right, leaf_nodes, count);
 } 
- 
+
 /**
- * Returns root of subtree with correct hash 
+ * Combine bpkg->hash bpkg->chunk_hash
+ * function: iterate through tree
+ *      call helper function to determine if hash in tree 
+ *      if exist, add hash to list end traversal of current subtree 
+ *      otherwise continue traverse 
 */
-void get_root_complete_subtree(struct merkle_tree_node* node, char*** all_nodes, size_t* count) {
+
+void get_root_complete_subtree(struct merkle_tree_node* node, struct bpkg_query* all_hashes, char*** result) {
+    
 
 }

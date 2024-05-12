@@ -425,6 +425,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
     //root doesnt match -> traverse tree and return chunks that match (check leaf nodes)
     else {
+        printf("incomplete\n");
         qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
         qry.len = 0;
 
@@ -435,27 +436,33 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
         //compare bpkg->chunks with all_leafs
         size_t count = 0;
-        for (size_t i = 0; i < bpkg->len_chunk; i++) {
-            if (strcmp(bpkg->chunks_hash[i], all_leafs[i]) == 0) {  //leaves should be same order as chunks same order as chunks
-                //realloc qry.hash to tmp space  
-                char** tmp = realloc(qry.hashes, (count + 1) * sizeof(char*));
-                if (tmp == NULL) {
-                    fprintf(stderr, "Error: Memory allocation failed\n");
-                    break;
-                }
-                //allocate space
-                qry.hashes = tmp;
 
-                //dynamically allocate space for hash 
-                qry.hashes[count] = malloc(HASH_SIZE * sizeof(char));
-                if (qry.hashes[count] == NULL) {
-                    fprintf(stderr, "Error: Memory allocation failed\n");
-                    break;
+        //iterate bpkg->hashes
+        for (size_t i = 0; i < bpkg->len_chunk; i++) {
+            //iterate all_leafs
+            for (size_t j = 0; j < bpkg->len_chunk; j++) {
+                if (strcmp(bpkg->chunks_hash[i], all_leafs[j]) == 0) {  //leaves should be same order as chunks same order as chunks
+                    //realloc qry.hash to tmp space  
+                    char** tmp = realloc(qry.hashes, (count + 1) * sizeof(char*));
+                    if (tmp == NULL) {
+                        fprintf(stderr, "Error: Memory allocation failed\n");
+                        break;
+                    }
+                    //allocate space
+                    qry.hashes = tmp;
+
+                    //dynamically allocate space for hash 
+                    qry.hashes[count] = malloc(HASH_SIZE * sizeof(char));
+                    if (qry.hashes[count] == NULL) {
+                        fprintf(stderr, "Error: Memory allocation failed\n");
+                        break;
+                    }
+                    //copy
+                    strcpy(qry.hashes[count], all_leafs[j]);
+                    count++;
                 }
-                //copy
-                strcpy(qry.hashes[count], all_leafs[i]);
-                count++;
             }
+            
         }
 
         //free all leafs 

@@ -249,7 +249,7 @@ void in_order_traversal(struct merkle_tree_node* node) {
     printf("Node computed hash: %s\n", node->computed_hash);
 
     //traverse right
-    in_order_traversal(node->right);
+    in_order_traversal(node->right); 
 } 
 
 /**
@@ -257,7 +257,7 @@ void in_order_traversal(struct merkle_tree_node* node) {
 */
 void get_leaf_hashes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* count) {
     if (node == NULL) {
-        return; 
+        return;  
     }
 
     if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
@@ -284,7 +284,7 @@ void get_leaf_nodes(struct merkle_tree_node* node, struct merkle_tree_node*** le
     }
 
     if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
-        printf("%ld %s\n",*count, node->computed_hash);
+        // printf("%ld %s\n",*count, node->computed_hash);
         // strdup(*leaf_nodes[*count], node->computed_hash); 
 
         //*(leaf_nodes->computed_hash) = strdup(node->computed_hash);    

@@ -566,6 +566,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
     //traverse tree (a computed chunk (child) must be incorrect)
     else {
+        qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 
@@ -653,6 +654,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     }
 
     else { 
+        qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 

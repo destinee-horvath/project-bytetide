@@ -143,7 +143,7 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
                     parent->right->parent = parent; 
                 }
             }
-
+ 
             parent_nodes[j] = parent;
 
             //to calculate hash 

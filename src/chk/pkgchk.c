@@ -464,7 +464,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
         }
         free(all_leafs);
 
-        qry.len = count+1;
+        qry.len = count;
     }
 
     destroy_tree(tree);

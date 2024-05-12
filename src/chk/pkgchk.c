@@ -644,7 +644,6 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     //build tree 
     build_merkle_tree(child_nodes, bpkg, &tree);
 
-
     //traverse tree to find hash
     struct merkle_tree_node* root_hash = in_order_traversal(tree->root, hash);
 
@@ -654,12 +653,12 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     }
 
     else { 
-        qry.hashes = malloc((bpkg->len_chunk) * sizeof(char*));
+        qry.hashes = malloc((bpkg->len_chunk+bpkg->len_hash) * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 
         //traverse 
-        find_subtree_chunks(root_hash, &hash_result, &count);
+        traverse_subtree(root_hash, &hash_result, &count);
 
         //copy
         for (size_t i = 0; i < count; i++) {
@@ -673,6 +672,13 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         }
         free(hash_result);
     }
+
+    destroy_tree(tree);
+
+    // for (size_t i = 0; i <bpkg->len_chunk; i++) {
+    //     free(child_nodes[i]);
+    // }
+    // free(child_nodes); 
  
     return qry;
 }

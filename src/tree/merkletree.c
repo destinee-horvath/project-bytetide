@@ -155,7 +155,7 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
             // printf("Parent: %s\n", parent->computed_hash);
             count++;
         }
-
+        
         free(current_nodes);
         //set parent_nodes to be current_nodes 
         current_nodes = parent_nodes;

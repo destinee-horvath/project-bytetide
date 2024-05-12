@@ -48,7 +48,11 @@ void get_leaf_hashes(struct merkle_tree_node*, char***, size_t*);
 
 void get_leaf_nodes(struct merkle_tree_node*, struct merkle_tree_node***, size_t*);
 
-void get_root_complete_subtree(struct merkle_tree_node* , struct bpkg_query* , char*** );
+void get_root_complete_subtree(struct merkle_tree_node* , char*** , size_t* , struct bpkg_obj*);
 
+size_t hash_exists(char* , struct bpkg_obj* );
 
+struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* , char*);
+
+void traverse_subtree(struct merkle_tree_node* , char***, size_t*);
 #endif

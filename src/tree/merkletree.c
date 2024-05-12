@@ -236,23 +236,6 @@ void destroy_tree_node(struct merkle_tree_node* node) {
 }
 
 /**
- * Performs inorder traversal of merkle tree 
-*/
-void in_order_traversal(struct merkle_tree_node* node) {
-    if (node == NULL) {
-        return; 
-    }
-
-    ///traverse left 
-    in_order_traversal(node->left);
-
-    printf("Node computed hash: %s\n", node->computed_hash);
-
-    //traverse right
-    in_order_traversal(node->right); 
-} 
-
-/**
  * Returns all the computed hashes of leaf nodes
 */
 void get_leaf_hashes(struct merkle_tree_node* node, char*** leaf_nodes, size_t* count) {
@@ -286,9 +269,6 @@ void get_leaf_nodes(struct merkle_tree_node* node, struct merkle_tree_node*** le
     } 
 
     if (node->is_leaf == 1 && node->left == NULL && node->right == NULL) {
-        // printf("%ld %s\n",*count, node->computed_hash);
-        // strdup(*leaf_nodes[*count], node->computed_hash); 
-
         strcpy((*leaf_nodes[*count])->computed_hash, node->computed_hash);    
         (*count)++;
         return;
@@ -304,12 +284,86 @@ void get_leaf_nodes(struct merkle_tree_node* node, struct merkle_tree_node*** le
 /**
  * Combine bpkg->hash bpkg->chunk_hash
  * function: iterate through tree
- *      call helper function to determine if hash in tree 
- *      if exist, add hash to list end traversal of current subtree 
- *      otherwise continue traverse 
+ *      if current node->computed hash exists in bpkg->hashes
+ *          - (traverse all bpkg->hashes and bpkg->chunks)
+ *          - if found, call helper function traverse_subtree() to store hashes in result 
+ *          - otherwise continue traverse 
 */
 
-void get_root_complete_subtree(struct merkle_tree_node* node, struct bpkg_query* all_hashes, char*** result) {
-    
+void get_root_complete_subtree(struct merkle_tree_node* node, char*** result, size_t* count, struct bpkg_obj* bpkg) {
+    if (node == NULL) {
+        return;
+    }
 
+    //traverse left 
+    get_root_complete_subtree(node->left, result, count, bpkg);
+
+    //check if hash exists 
+    if (hash_exists(node->computed_hash, bpkg)) {
+        traverse_subtree(node, result, count);
+        return;
+    }
+
+    //traverse right 
+    get_root_complete_subtree(node->right, result, count, bpkg);
+
+}
+
+size_t hash_exists(char* hash, struct bpkg_obj* bpkg) {
+    //check if internal node 
+    for (size_t i = 0; i < bpkg->len_hash; i++) {
+        if (strncmp(hash, bpkg->hashes[i], HASH_SIZE-1) == 0) {
+            return 1;
+        }
+    }
+    
+    //check if leaf 
+    for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        if (strncmp(hash, bpkg->chunks_hash[i], HASH_SIZE-1) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/**
+ * Performs inorder traversal of merkle tree to find hash
+*/
+struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* node, char* hash) {
+    if (node == NULL) {
+        return NULL; 
+    }
+    if (hash != NULL || strncmp(node->computed_hash, hash, HASH_SIZE-1)) { 
+        return node;
+    }
+
+    ///traverse left 
+    in_order_traversal(node->left, hash);
+
+    //traverse right
+    return in_order_traversal(node->right, hash);
+} 
+
+/**
+ * Performs traversal of a subtree from a given node and stores it in hashes
+*/
+void traverse_subtree(struct merkle_tree_node* node, char*** hashes, size_t* count) {
+    if (node == NULL) {
+        return;
+    }
+
+    //traverse left 
+    traverse_subtree(node->left, hashes, count);
+
+    char** new_hashes = realloc(*hashes, (*count + 1) * sizeof(char*));
+    if (new_hashes == NULL) {
+        fprintf(stderr, "Error: Fail to allocate memory\n");
+        return;
+    }
+    *hashes = new_hashes;
+    (*hashes)[*count] = strdup(node->computed_hash); //duplicate hash 
+    (*count)++;
+
+    //traverse right 
+    traverse_subtree(node->right, hashes, count);
 }

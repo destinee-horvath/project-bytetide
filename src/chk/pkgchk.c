@@ -511,7 +511,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
  * 
  * Returns root of subtree with correct hash
  */
-struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
+struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) { 
     struct bpkg_query qry = { 0 };
     qry.len = 0;
 
@@ -526,7 +526,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
         return qry; 
     } 
 
-    //make nodes for leaves
+    //make nodes for hashes
     for (size_t i = 0; i < bpkg->len_chunk; i++) {
         child_nodes[i] = make_node(NULL, NULL, 1);
         if (child_nodes[i] == NULL) {
@@ -553,31 +553,37 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
     
     //if root is correct, everything else must be correct 
     if (strcmp(tree->root->computed_hash, bpkg->hashes[0]) == 0) {
-        qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
+        qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
         if (qry.hashes == NULL) {
             fprintf(stderr, "Error: Memory allocation failed");
             return qry;
         }
 
         //copy root
-        qry.hashes[0] = strdup(bpkg->chunks_hash[0]);
+        qry.hashes[0] = strdup(bpkg->hashes[0]);
         qry.len = 1;
     }
 
     //traverse tree (a computed chunk (child) must be incorrect)
     else {
-        qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
-        qry.len = 0;
+        size_t count = 0;
+        char** hash_result = NULL;
+        *hash_result = NULL;
 
-        char** hash_result = malloc(HASH_SIZE);
-        struct bpkg_query all_hash_qry = bpkg_get_all_hashes(bpkg);
-        get_root_complete_subtree(tree->root, &all_hash_qry, &hash_result);
-
-        bpkg_query_destroy(&all_hash_qry);
+        get_root_complete_subtree(tree->root, &hash_result, &count, bpkg);
 
         //copy from hash result to qry->hashes 
-        //free hash result
-        //NOTE MALLOC NEEDS TO BE FIXED 
+        for (size_t i = 0; i < count; i++) {
+            qry.hashes[i] = strdup(hash_result[i]);
+            qry.len++;
+        }
+
+        //free hash_result
+        for (size_t i = 0; i < count; i++) {
+            free(hash_result[i]); 
+        }
+        free(hash_result);
+
     }   
 
     destroy_tree(tree);
@@ -586,6 +592,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
 
 /**
+ * flag: -hashes_of
  * Retrieves all chunk hashes given a certain an ancestor hash (or itself)
  * Example: If the root hash was given, all chunk hashes will be outputted
  * 	If the root's left child hash was given, all chunks corresponding to
@@ -603,6 +610,68 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
 
     if (bpkg == NULL) {
         return qry;
+    }
+
+    //dynamically allocate space to store child nodes 
+    struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+    if (!child_nodes) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return qry; 
+    } 
+
+    //make nodes for hashes
+    for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        child_nodes[i] = make_node(NULL, NULL, 1);
+        if (child_nodes[i] == NULL) {
+            return qry;
+        }
+    }
+
+    //read data into space allocated to child nodes
+    read_data(&child_nodes, bpkg);
+
+    //dynamically allocate space to store tree 
+    struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
+    if (!tree) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        for (size_t k = 0; k <= (bpkg->len_chunk+bpkg->len_hash); k++) {
+            destroy_tree_node(child_nodes[k]);
+        }
+        free(child_nodes);
+        return qry;
+    }
+
+    //build tree 
+    build_merkle_tree(child_nodes, bpkg, &tree);
+
+
+    //traverse tree to find hash
+    struct merkle_tree_node* root_hash = in_order_traversal(tree->root, hash);
+
+    //hash not found 
+    if (root_hash == NULL) {
+        return qry;
+    }
+
+    else { 
+        size_t count = 0;
+        char** hash_result = NULL;
+        *hash_result = NULL;
+
+        //traverse 
+        traverse_subtree(root_hash, &hash_result, &count);
+
+        //copy
+        for (size_t i = 0; i < count; i++) {
+            qry.hashes[i] = strdup(hash_result[i]);
+            qry.len++;
+        }
+
+        //free
+        for (size_t i = 0; i < count; i++) {
+            free(hash_result[i]); 
+        }
+        free(hash_result);
     }
 
     return qry;

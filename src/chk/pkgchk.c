@@ -568,7 +568,6 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
     else {
         size_t count = 0;
         char** hash_result = NULL;
-        *hash_result = NULL;
 
         get_root_complete_subtree(tree->root, &hash_result, &count, bpkg);
 
@@ -656,7 +655,6 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     else { 
         size_t count = 0;
         char** hash_result = NULL;
-        *hash_result = NULL;
 
         //traverse 
         traverse_subtree(root_hash, &hash_result, &count);

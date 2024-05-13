@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 			bpkg_query_destroy(&qry); 
 		} else if(argselect == 4) {
 
-			qry = bpkg_get_all_chunk_hashes_from_hash(obj, "2eb439690cb27425456dc9d81e2fcae7f854a369f058574558abd5c223f38e55");
+			qry = bpkg_get_all_chunk_hashes_from_hash(obj, hash);
 			bpkg_print_hashes(&qry);
 			bpkg_query_destroy(&qry); 
 		} else if(argselect == 5) {

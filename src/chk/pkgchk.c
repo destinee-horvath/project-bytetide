@@ -642,7 +642,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         free(child_nodes); 
         return qry; 
     }
-    
+
     //dynamically allocate space to store tree 
     struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
     if (!tree) {
@@ -658,10 +658,12 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
     build_merkle_tree(child_nodes, bpkg, &tree);
 
     //traverse tree to find hash
-    struct merkle_tree_node* root_hash = in_order_traversal(tree->root, hash);
+    struct merkle_tree_node* root_hash;
+    in_order_traversal(tree->root, hash, &root_hash);
 
     //hash not found 
     if (root_hash == NULL) {
+        destroy_tree(tree);
         return qry;
     }
 

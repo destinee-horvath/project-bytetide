@@ -321,19 +321,22 @@ size_t hash_exists(char* hash, struct bpkg_obj* bpkg) {
 /**
  * Performs inorder traversal of merkle tree to find hash
 */
-struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* node, char* hash) {
+void in_order_traversal(struct merkle_tree_node* node, char* hash, struct merkle_tree_node** sub_root) {
     if (node == NULL) { 
-        return NULL; 
+        return; 
     }
-    if (hash != NULL || strncmp(node->computed_hash, hash, HASH_SIZE-1)) { 
-        return node;
+    // printf("%s %s\n", node->computed_hash, hash); 
+
+    if (strncmp(node->computed_hash, hash, HASH_SIZE-2) == 0 && hash != NULL) { 
+        *sub_root = node;
+        return;
     }
 
     ///traverse left 
-    in_order_traversal(node->left, hash);
+    in_order_traversal(node->left, hash, sub_root);
 
     //traverse right
-    return in_order_traversal(node->right, hash);
+    in_order_traversal(node->right, hash, sub_root);
 } 
 
 /**

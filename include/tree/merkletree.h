@@ -13,7 +13,7 @@ struct merkle_tree_node {
     struct merkle_tree_node* left;
     struct merkle_tree_node* right;
     struct merkle_tree_node* parent;
-    int is_leaf; //1 if leaf otherwise 0
+    size_t is_leaf; //1 if leaf otherwise 0
     char expected_hash[SHA256_HEXLEN+1];
     char computed_hash[SHA256_HEXLEN+1]; //+1 to account for null character 
 };
@@ -30,9 +30,9 @@ struct bpkg_query;
 
 void compute_hash(uint8_t* , size_t , char* ); 
 
-struct merkle_tree_node* make_node(void* , void* , int);
+struct merkle_tree_node* make_node(void* , void* , size_t);
 
-void read_data(struct merkle_tree_node***, struct bpkg_obj*);
+size_t read_data(struct merkle_tree_node***, struct bpkg_obj*);
 
 void build_merkle_tree(struct merkle_tree_node**, struct bpkg_obj*, struct merkle_tree** );
 
@@ -56,7 +56,7 @@ struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* , char*);
 
 void traverse_subtree(struct merkle_tree_node* , char***, size_t*);
 
-void traverse_subtree_hashes(struct merkle_tree_node* , char***, size_t*);
+void traverse_subtree_hashes(struct merkle_tree_node*, char***, size_t*);
 
 void find_subtree_chunks(struct merkle_tree_node* , char***, size_t*);
 #endif

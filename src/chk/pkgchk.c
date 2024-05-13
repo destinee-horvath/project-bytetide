@@ -392,7 +392,10 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
     }
 
     //read data into space allocated to child nodes
-    read_data(&child_nodes, bpkg);
+    size_t ret = read_data(&child_nodes, bpkg);
+    if (ret == 1) {
+        return qry;
+    }
 
     //dynamically allocate space to store tree 
     struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
@@ -535,7 +538,10 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
     }
 
     //read data into space allocated to child nodes
-    read_data(&child_nodes, bpkg);
+    size_t ret = read_data(&child_nodes, bpkg);
+        if (ret == 1) {
+        return qry;
+    }
  
     //dynamically allocate space to store tree 
     struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
@@ -546,7 +552,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
         }
         free(child_nodes);
         return qry;
-    }
+    } 
 
     //build tree 
     build_merkle_tree(child_nodes, bpkg, &tree);
@@ -554,7 +560,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
     //if root is correct, everything else must be correct 
     if (strcmp(tree->root->computed_hash, bpkg->hashes[0]) == 0) {
         qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
-        if (qry.hashes == NULL) {
+        if (qry.hashes == NULL) { 
             fprintf(stderr, "Error: Memory allocation failed");
             return qry;
         }
@@ -610,7 +616,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
 
     if (bpkg == NULL) {
         return qry;
-    }
+    } 
 
     //dynamically allocate space to store child nodes 
     struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
@@ -625,11 +631,18 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         if (child_nodes[i] == NULL) {
             return qry;
         }
-    }
+    } 
 
     //read data into space allocated to child nodes
-    read_data(&child_nodes, bpkg);
-
+    size_t ret = read_data(&child_nodes, bpkg);
+    if (ret == 1) {
+        for (size_t i = 0; i <bpkg->len_chunk; i++) {
+            free(child_nodes[i]);
+        }
+        free(child_nodes); 
+        return qry; 
+    }
+    
     //dynamically allocate space to store tree 
     struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
     if (!tree) {
@@ -641,7 +654,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         return qry;
     }
 
-    //build tree 
+    //build tree & free child nodes 
     build_merkle_tree(child_nodes, bpkg, &tree);
 
     //traverse tree to find hash
@@ -660,7 +673,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         //traverse 
         traverse_subtree_hashes(root_hash, &hash_result, &count);
 
-        //copy
+        //copy 
         for (size_t i = 0; i < count; i++) {
             qry.hashes[i] = strdup(hash_result[i]); 
             qry.len++;

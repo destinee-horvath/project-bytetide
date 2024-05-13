@@ -32,7 +32,7 @@ void compute_hash(uint8_t* data, size_t size, char* output) {
 /**
  * Creates a node
 */
-struct merkle_tree_node* make_node(void* key, void* value, int is_leaf) {
+struct merkle_tree_node* make_node(void* key, void* value, size_t is_leaf) {
     //dynamically allocate memory to store node
     struct merkle_tree_node* node = malloc(sizeof(struct merkle_tree_node));
     if (node == NULL) {
@@ -55,7 +55,7 @@ struct merkle_tree_node* make_node(void* key, void* value, int is_leaf) {
 /**
  * Reads .data file
 */
-void read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg) {
+size_t read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg) {
     //construct file_path
     char *rm_last_file = strrchr(bpkg->path, '/');
     char file_path[BUFFER]; 
@@ -75,7 +75,7 @@ void read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg) 
     FILE *file = fopen(file_path, "rb");
     if (file == NULL) {
         fprintf(stderr, "Error: Failed to open .data file with filename %s\n", bpkg->filename);
-        return;
+        return 1;
     }  
     //iterate through file and make nodes 
     for (size_t i = 0; i < bpkg->len_chunk; i++) { 
@@ -88,7 +88,7 @@ void read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg) 
             }
             free(*current_nodes);
             fclose(file);
-            return;
+            return 1;
         }
 
         //read data of size (doesnt include null byte)
@@ -102,6 +102,8 @@ void read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg) 
 
         free(hash_buffer);
     }
+
+    return 0;
 }
 
 /**
@@ -156,6 +158,7 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
             count++;
         }
 
+
         free(current_nodes);
         //set parent_nodes to be current_nodes 
         current_nodes = parent_nodes;
@@ -170,19 +173,9 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
         num_nodes_level = count;
         num_nodes += count;
         level--;
-    }
 
-    //dynamically allocate memory for tree 
-    // struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
-    // if (!tree) {
-    //     fprintf(stderr, "Error: Failed to allocate memory\n");
-    //     for (size_t k = 0; k <= (bpkg->len_chunk+bpkg->len_hash); k++) {
-    //         destroy_tree_node(current_nodes[k]);
-    //     }
-    //     free(current_nodes);
-    //     return;
-    // }
-
+    }   
+    
     (*tree)->root = current_nodes[0]; //last is root 
     (*tree)->n_nodes = num_nodes; 
     
@@ -191,7 +184,6 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
     verify_tree(num_nodes, (size_t)(log2(bpkg->len_chunk)) + 1);
    
     free(current_nodes);
-
 }
 
 /**
@@ -330,7 +322,7 @@ size_t hash_exists(char* hash, struct bpkg_obj* bpkg) {
  * Performs inorder traversal of merkle tree to find hash
 */
 struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* node, char* hash) {
-    if (node == NULL) {
+    if (node == NULL) { 
         return NULL; 
     }
     if (hash != NULL || strncmp(node->computed_hash, hash, HASH_SIZE-1)) { 
@@ -376,24 +368,27 @@ void traverse_subtree_hashes(struct merkle_tree_node* node, char*** hashes, size
         return;
     }
 
+    // printf("TRAVERSING: %s %ld\n", node->computed_hash, node->is_leaf);   
+    
     //traverse left 
-    traverse_subtree(node->left, hashes, count);
+    traverse_subtree_hashes(node->left, hashes, count);
 
-    char** new_hashes = realloc(*hashes, (*count + 1) * sizeof(char*));
-    if (new_hashes == NULL) {
-        fprintf(stderr, "Error: Fail to allocate memory\n");
-        return;
-    }
+    //only store chunks
+    if (node->is_leaf == 1) {
+        //allocate new memory 
+        char** new_hashes = realloc(*hashes, (*count + 1) * sizeof(char*));
+        if (new_hashes == NULL) {
+            fprintf(stderr, "Error: Fail to allocate memory\n");
+            return; 
+        }   
 
-    //only store hashes
-    if (node->is_leaf == 0) {
         *hashes = new_hashes;
         (*hashes)[*count] = strdup(node->computed_hash); //duplicate hash 
         (*count)++;
     }
     
     //traverse right 
-    traverse_subtree(node->right, hashes, count);
+    traverse_subtree_hashes(node->right, hashes, count);
 }
 
 /**

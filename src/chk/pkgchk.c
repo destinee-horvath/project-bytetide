@@ -526,7 +526,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
         return qry; 
     } 
 
-    //make nodes for hashes
+    //make nodes for hashes 
     for (size_t i = 0; i < bpkg->len_chunk; i++) {
         child_nodes[i] = make_node(NULL, NULL, 1);
         if (child_nodes[i] == NULL) {
@@ -566,7 +566,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
     //traverse tree (a computed chunk (child) must be incorrect)
     else {
-        qry.hashes = malloc(bpkg->len_hash * sizeof(char*));
+        qry.hashes = malloc((bpkg->len_hash+bpkg->len_chunk) * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 
@@ -658,7 +658,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         char** hash_result = NULL;
 
         //traverse 
-        traverse_subtree(root_hash, &hash_result, &count);
+        traverse_subtree_hashes(root_hash, &hash_result, &count);
 
         //copy
         for (size_t i = 0; i < count; i++) {

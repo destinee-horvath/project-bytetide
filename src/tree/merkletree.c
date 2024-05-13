@@ -155,7 +155,7 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
             // printf("Parent: %s\n", parent->computed_hash);
             count++;
         }
-        
+
         free(current_nodes);
         //set parent_nodes to be current_nodes 
         current_nodes = parent_nodes;
@@ -298,8 +298,8 @@ void get_root_complete_subtree(struct merkle_tree_node* node, char*** result, si
     //traverse left 
     get_root_complete_subtree(node->left, result, count, bpkg);
 
-    //check if hash isnt leaf and exists 
-    if (node->is_leaf != 1 && hash_exists(node->computed_hash, bpkg)) {
+    //check if hash exists 
+    if (hash_exists(node->computed_hash, bpkg)) {
         traverse_subtree(node, result, count);
         return;
     }
@@ -345,7 +345,7 @@ struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* node, char*
 } 
 
 /**
- * Performs traversal of a subtree from a given node and stores it in hashes
+ * Performs traversal of a subtree from a given node and stores hashes and chunks in hashes
 */
 void traverse_subtree(struct merkle_tree_node* node, char*** hashes, size_t* count) {
     if (node == NULL) {
@@ -368,6 +368,37 @@ void traverse_subtree(struct merkle_tree_node* node, char*** hashes, size_t* cou
     traverse_subtree(node->right, hashes, count);
 }
 
+/**
+ * Performs traversal of a subtree from a given node and only stores the hashes
+*/
+void traverse_subtree_hashes(struct merkle_tree_node* node, char*** hashes, size_t* count) {
+    if (node == NULL) {
+        return;
+    }
+
+    //traverse left 
+    traverse_subtree(node->left, hashes, count);
+
+    char** new_hashes = realloc(*hashes, (*count + 1) * sizeof(char*));
+    if (new_hashes == NULL) {
+        fprintf(stderr, "Error: Fail to allocate memory\n");
+        return;
+    }
+
+    //only store hashes
+    if (node->is_leaf == 0) {
+        *hashes = new_hashes;
+        (*hashes)[*count] = strdup(node->computed_hash); //duplicate hash 
+        (*count)++;
+    }
+    
+    //traverse right 
+    traverse_subtree(node->right, hashes, count);
+}
+
+/**
+ * Performs traversal of a subtree from a given node only stored the children of subtree
+*/
 void find_subtree_chunks(struct merkle_tree_node* node, char*** hashes, size_t* count) {
     if (node == NULL) {
         return;

@@ -56,5 +56,7 @@ struct merkle_tree_node* in_order_traversal(struct merkle_tree_node* , char*);
 
 void traverse_subtree(struct merkle_tree_node* , char***, size_t*);
 
+void traverse_subtree_hashes(struct merkle_tree_node* , char***, size_t*);
+
 void find_subtree_chunks(struct merkle_tree_node* , char***, size_t*);
 #endif

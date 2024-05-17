@@ -386,8 +386,7 @@ void in_order_traversal(struct merkle_tree_node* node, char* hash, struct merkle
     if (node == NULL) { 
         return; 
     }
-    // printf("%s %s\n", node->computed_hash, hash); 
-
+    
     if (strncmp(node->computed_hash, hash, HASH_SIZE-2) == 0 && hash != NULL) { 
         *sub_root = node;
         return;

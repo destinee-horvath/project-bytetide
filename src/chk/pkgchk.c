@@ -685,9 +685,10 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         return qry;
     }
 
-    //hash not found 
+    //hash not found (tree is incomplete)
     else {
         destroy_tree(tree);
+
         //dynamically allocate space to store child nodes  
         struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
         if (!child_nodes) {
@@ -735,7 +736,8 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
             size_t count = 0;
             char** hash_result = NULL;
 
-            traverse_subtree(root_hash, &hash_result, &count);
+            //traverse subtree with given node
+            traverse_subtree_hashes(root_hash, &hash_result, &count);
 
             destroy_tree(tree); 
 

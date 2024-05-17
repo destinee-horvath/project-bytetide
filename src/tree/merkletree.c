@@ -292,7 +292,7 @@ void get_root_complete_subtree(struct merkle_tree_node* node, char*** result, si
 
     //if parent node in result, mark subtree of parent visited 
     if (((size_t)(intptr_t)(node->value)) == 1) { //convert void* tosize_t
-        printf("internal node children have been visited\n");
+        // printf("internal node children have been visited\n");
         if (node->left != NULL) {
             node->left->value = ((void *)(intptr_t)(1));  
         }
@@ -314,30 +314,13 @@ void get_root_complete_subtree(struct merkle_tree_node* node, char*** result, si
         (*result)[*count] = strdup(node->computed_hash); //duplicate hash 
         (*count)++;
 
-        //mark next nodes visited to stop traversal 
+        //if internal node mark next nodes visited to stop traversal 
         if (node->left != NULL) {
             node->left->value = ((void *)(intptr_t)(1));   //convert size_t to void
         }
         if (node->right != NULL) {
             node->right->value = ((void *)(intptr_t)(1));
         }
-
-        // //if internal node, dont return chunks 
-        // if (node->is_leaf != 0) { 
-        //     traverse_subtree_hashes(node, result, count);
-        // }
-
-        // //else if child is correct return child (current node)
-        // else {
-        //     char** new_hashes = realloc(*result, (*count + 1) * sizeof(char*));
-        //     if (new_hashes == NULL) {
-        //         fprintf(stderr, "Error: Fail to allocate memory\n");
-        //         return; 
-        //     }
-        //     *result = new_hashes;
-        //     (*result)[*count] = strdup(node->computed_hash); //duplicate hash 
-        //     (*count)++;
-        // }
         return;
     }
 
@@ -462,4 +445,19 @@ void find_subtree_chunks(struct merkle_tree_node* node, char*** hashes, size_t* 
 
     //traverse right 
     find_subtree_chunks(node->right, hashes, count);
+}
+
+void get_root_from_hash(struct merkle_tree_node* node, struct merkle_tree_node** node_with_hash, char* hash) {
+    if (node == NULL) {
+        return;
+    }
+
+    get_root_from_hash(node->left, node_with_hash, hash);
+
+    if (strncmp(node->computed_hash, hash, HASH_SIZE-1) == 0) {
+        *node_with_hash = node;
+        return;
+    }
+
+    get_root_from_hash(node->right, node_with_hash, hash);
 }

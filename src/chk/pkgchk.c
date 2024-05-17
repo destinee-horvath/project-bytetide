@@ -667,13 +667,47 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         return qry;
     }
 
-    else { 
+    else {  
+        //destroy previous tree 
+        destroy_tree(tree);
+
+        //dynamically allocate space to store new tree 
+        struct merkle_tree* chunk_tree = malloc(sizeof(struct merkle_tree));
+        if (!chunk_tree) {     
+            return qry;
+        } 
+
         qry.hashes = malloc((bpkg->len_chunk+bpkg->len_hash) * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 
-        //traverse 
-        traverse_subtree_hashes(root_hash, &hash_result, &count);
+        //dynamically allocate space to store chunk hash nodes 
+        struct merkle_tree_node** chunk_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+        if (!chunk_nodes) {
+            fprintf(stderr, "Error: Failed to allocate memory\n");
+            return qry; 
+        } 
+
+        //make nodes for chunks and store chunks from bpkg file 
+        for (size_t i = 0; i < bpkg->len_chunk; i++) {
+            chunk_nodes[i] = make_node(NULL, NULL, 1);
+            if (chunk_nodes[i] == NULL) {
+                return qry;
+            }
+
+            strcpy(chunk_nodes[i]->computed_hash, bpkg->chunks_hash[i]);
+        }
+
+        //build tree hen free chunk_nodes
+        build_merkle_tree(chunk_nodes, bpkg, &chunk_tree);
+
+        struct merkle_tree_node* node_with_hash = NULL;
+        
+        //find node with hash in tree 
+        get_root_from_hash(chunk_tree->root, &node_with_hash, hash);
+
+        //traverse subtree from node 
+        traverse_subtree(node_with_hash, &hash_result, &count);
 
         //copy 
         for (size_t i = 0; i < count; i++) {
@@ -686,15 +720,11 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
             free(hash_result[i]); 
         }
         free(hash_result);
+
+        //destroy tree
+        destroy_tree(chunk_tree); 
     }
-
-    destroy_tree(tree);
-
-    // for (size_t i = 0; i <bpkg->len_chunk; i++) {
-    //     free(child_nodes[i]);
-    // }
-    // free(child_nodes); 
- 
+    
     return qry;
 }
 

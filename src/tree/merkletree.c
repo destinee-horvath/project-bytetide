@@ -290,10 +290,20 @@ void get_root_complete_subtree(struct merkle_tree_node* node, char*** result, si
     //traverse left 
     get_root_complete_subtree(node->left, result, count, bpkg);
 
-    //check if hash exists 
-    if (hash_exists(node->computed_hash, bpkg)) {
-        traverse_subtree(node, result, count);
-        return;
+    //check if hash exists and node isnt a leaf (chunk)
+    if (hash_exists(node->computed_hash, bpkg) && node->is_leaf == 0) {
+        // traverse_subtree(node, result, count);
+        
+        //store hashes 
+        char** new_hashes = realloc(*result, (*count + 1) * sizeof(char*));
+        if (new_hashes == NULL) {
+            fprintf(stderr, "Error: Fail to allocate memory\n");
+            return;
+        }
+        *result = new_hashes;
+        (*result)[*count] = strdup(node->computed_hash); //duplicate hash 
+        (*count)++;
+        // return;
     }
 
     //traverse right 

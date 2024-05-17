@@ -42,6 +42,7 @@ struct bpkg_obj* bpkg_load(const char* path) {
 
     //check if file path is valid (by opening an existing package)
     FILE* file = fopen(path, "rb");
+
     //if file path doesnt exist
     if (file == NULL) {
         // fprintf(stderr, "Error: File path does not exist: %s\n", path);
@@ -66,8 +67,8 @@ struct bpkg_obj* bpkg_load(const char* path) {
             *last_dot = '\0'; 
         }
 
-        strcat(new_filename, ".data");
-
+        strcat(new_filename, ".dat");
+ 
         obj->filename = strdup(new_filename);
         return obj;
     }
@@ -539,7 +540,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
     //read data into space allocated to child nodes
     size_t ret = read_data(&child_nodes, bpkg);
-        if (ret == 1) {
+    if (ret == 1) {
         return qry;
     }
  
@@ -554,7 +555,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
         return qry;
     } 
 
-    //build tree 
+    //build tree (child_nodes are also freed here)
     build_merkle_tree(child_nodes, bpkg, &tree);
     
     //if root is correct, everything else must be correct 
@@ -568,14 +569,54 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
         //copy root
         qry.hashes[0] = strdup(bpkg->hashes[0]);
         qry.len = 1;
+
     }
 
-    //traverse tree (a computed chunk (child) must be incorrect)
+    //create tree with bpkg file 
     else {
+        // //destroy previous tree 
+        // destroy_tree(tree);
+
+        // //dynamically allocate space to store new tree 
+        // struct merkle_tree* chunk_tree = malloc(sizeof(struct merkle_tree));
+        // if (!chunk_tree) {     
+        //     return qry;
+        // } 
+
         qry.hashes = malloc((bpkg->len_hash+bpkg->len_chunk) * sizeof(char*));
         size_t count = 0;
         char** hash_result = NULL;
 
+        // //dynamically allocate space to store chunk hash nodes 
+        // struct merkle_tree_node** chunk_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+        // if (!chunk_nodes) {
+        //     fprintf(stderr, "Error: Failed to allocate memory\n");
+        //     return qry; 
+        // } 
+
+        // //make nodes for chunks 
+        // for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        //     chunk_nodes[i] = make_node(NULL, NULL, 1);
+        //     if (chunk_nodes[i] == NULL) {
+        //         return qry;
+        //     }
+        // }
+        
+        // //store chunks from bpkg (instead of data)
+        // for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        //     strcpy(chunk_nodes[i]->computed_hash, bpkg->chunks_hash[i]);
+        // }
+
+        // //build tree 
+        // build_merkle_tree(chunk_nodes, bpkg, &chunk_tree);
+
+        // //search tree
+        // traverse_subtree(chunk_tree->root, hash_result, &count);
+
+        // //destroy tree
+        // destroy_tree(chunk_tree);
+
+        //traverse tree and store completed nodes in hash_result 
         get_root_complete_subtree(tree->root, &hash_result, &count, bpkg);
 
         //copy from hash result to qry->hashes 
@@ -589,7 +630,6 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
             free(hash_result[i]); 
         }
         free(hash_result);
-
     }   
 
     destroy_tree(tree);

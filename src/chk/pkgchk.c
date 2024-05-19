@@ -731,7 +731,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
         struct merkle_tree_node* root_hash;
         in_order_traversal(tree->root, hash, &root_hash);
 
-        //hash not found (incomplete tree)  root_hash == NULL
+        //hash not found (incomplete tree) 
         if (root_hash == NULL) {
             destroy_tree(tree);
             return qry;

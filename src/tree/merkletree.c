@@ -121,7 +121,6 @@ size_t read_data(struct merkle_tree_node*** current_nodes, struct bpkg_obj* bpkg
 */
 void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj* bpkg, 
     struct merkle_tree** tree) {
-
     
     //variables used to determine if tree is valid 
     size_t num_nodes_level = bpkg->len_chunk; //to store num nodes on a level
@@ -160,13 +159,13 @@ void build_merkle_tree(struct merkle_tree_node** current_nodes, struct bpkg_obj*
                     parent->right->parent = parent; 
                 }
             }
-            //if odd number of nodes, duplicate it 
-            else {
-                parent->right = current_nodes[i]; 
-                if (parent->right) {
-                    parent->right->parent = parent;
-                }
-            }
+            // //if odd number of nodes, duplicate it 
+            // else {
+            //     parent->right = current_nodes[i]; 
+            //     if (parent->right) {
+            //         parent->right->parent = parent;
+            //     }
+            // }
  
             parent_nodes[j] = parent;
 
@@ -274,7 +273,6 @@ void destroy_tree_node(struct merkle_tree_node* node) {
 
 
 // -- HELPER FUNCTIONS -------------------------------------------------------------------------------------------------------
-
 
 /**
  * - returns the nodes of the chunks of the merkle tree through leaf_nodes 

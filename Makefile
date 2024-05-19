@@ -29,22 +29,9 @@ pkgchecker: src/pkgmain.c src/chk/pkgchk.c
 
 pkgmain: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
-	./pkgmain resources/pkgs/file1.bpkg -file_check file1.data
-# ./pkgmain resources/pkgs/file2.bpkg -file_check file2.data
-# ./pkgmain resources/pkgs/file4.bpkg -file_check file4.data
-# ./pkgmain resources/pkgs/file3.bpkg -all_hashes file3.data
-# ./pkgmain 3_complete/complete_1.bpkg -all_hashes file3.data 
-	./pkgmain 3_complete/complete_1.bpkg -min_hashes file3.data > someOut.txt
-	./pkgmain 3_incomplete/incomplete_1.bpkg -min_hashes incomplete_1.dat > someOut.txt
-
 
 merkletree: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
-	./pkgmain 3_complete/complete_1.bpkg -min_hashes complete_1.dat > someOut.txt
-# ./pkgmain 3_incomplete/incomplete_1.bpkg -hashes_of > someOut.txt
-# ./pkgmain 3_incomplete/incomplete_1.bpkg -hashes_of 67b99530f8bde5bcb64dffd19ad65679debc512e2266eabb82a682d22a0e82c1 incomplete_1.dat > someOut.txt
-# ./pkgmain 3_complete/complete_1.bpkg -hashes_of 2eb439690cb27425456dc9d81e2fcae7f854a369f058574558abd5c223f38e55 complete1.dat > someOut.txt
-	./pkgmain 3_incomplete/incomplete_2.bpkg -min_hashes > someOut.txt
 
 # Required for Part 2 - Make sure it outputs `btide` file
 # in your directory ./	

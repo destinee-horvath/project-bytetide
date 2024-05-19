@@ -743,7 +743,7 @@ struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg,
             char** hash_result = NULL;
 
             //traverse subtree with given node
-            traverse_subtree(root_hash, &hash_result, &count);
+            traverse_subtree_hashes(root_hash, &hash_result, &count);
 
             destroy_tree(tree); 
 

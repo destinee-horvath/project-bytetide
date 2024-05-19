@@ -147,16 +147,6 @@ struct bpkg_obj* bpkg_load(const char* path) {
         }
     }
 
-    //check current line has nchunks
-    if (fgets(line, sizeof(line), file) == NULL || strncmp(line, "nchunks:", 8) != 0) {
-        if (obj->hashes != NULL) {
-            for (size_t j = 0; j < obj->len_hash; j++) {
-                free(obj->hashes[j]);
-            }
-            free(obj->hashes);
-            obj->hashes = NULL;
-        }
-    }
 
     fscanf(file, "nchunks: %u\n", &obj->len_chunk);
 

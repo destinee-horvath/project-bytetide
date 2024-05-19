@@ -44,8 +44,14 @@ int arg_select(int argc, char** argv, int* asel, char* harg) {
 		*asel = 5;
 		// strncpy(harg, argv[3], SHA256_HEX_LEN);
 	}
-	if (strcmp(cursor, "-everything") == 0) {
+	if (strcmp(cursor, "-test_bpkg") == 0) {
 		*asel = 6;
+	}
+	if (strcmp(cursor, "-test_tree") == 0) {
+		*asel = 7;
+	}
+	if (strcmp(cursor, "-test_data") == 0) {
+		*asel = 8;
 	}
 	return *asel;
 }
@@ -58,7 +64,30 @@ void bpkg_print_hashes(struct bpkg_query* qry) {
 }
 
 void bpkg_print_all(struct bpkg_obj* obj) {
+	if (obj == NULL) {
+        return;
+    }
+	//something was wrong loading the data 
+    if (obj->identifier == NULL) {
+		return;
+	}
 
+	printf("%s\n", obj->identifier);
+	printf("%s\n", obj->filename);
+	printf("%d\n", obj->size);
+
+	printf("%d\n", obj->len_hash);
+	if (obj->hashes == NULL) {
+		return;
+	}
+	for (size_t i = 0; i < obj->len_hash; i++) {
+		printf("%s\n", obj->hashes[i]);
+	}
+
+	printf("%d\n", obj->len_chunk);
+	for (size_t i = 0; i < obj->len_chunk; i++) {
+		printf("%s,%d,%d\n", obj->chunks_hash[i], *obj->chunks_offset[i], *obj->chunks_size[i]);
+	}
 }
 
 int main(int argc, char** argv) {
@@ -102,8 +131,19 @@ int main(int argc, char** argv) {
 			bpkg_query_destroy(&qry);
 
 		} 
+		/**
+		 * For testcases
+		*/
 		else if (argselect == 6) {
-			//for testcases
+			bpkg_print_all(obj);
+		}
+		else if (argselect == 7) {
+			printf("test_make_tree\n");
+			test_make_tree(obj);
+		}
+		else if (argselect == 8) {
+			printf("read_data\n");
+			//print return of reading data file 
 		}
         else {
 			puts("Argument is invalid");

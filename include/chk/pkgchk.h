@@ -117,5 +117,7 @@ void bpkg_query_destroy(struct bpkg_query* qry);
  */
 void bpkg_obj_destroy(struct bpkg_obj* obj);
 
+void test_make_tree(struct bpkg_obj* bpkg);
+
 #endif
 

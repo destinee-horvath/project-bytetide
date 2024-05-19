@@ -567,6 +567,3 @@ void traverse_subtree(struct merkle_tree_node* node, char*** hashes, size_t* cou
 }
 
 
-
-
-

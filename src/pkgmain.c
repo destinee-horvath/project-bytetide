@@ -138,11 +138,9 @@ int main(int argc, char** argv) {
 			bpkg_print_all(obj);
 		}
 		else if (argselect == 7) {
-			printf("test_make_tree\n");
 			test_make_tree(obj);
 		}
 		else if (argselect == 8) {
-			printf("read_data\n");
 			//print return of reading data file 
 		}
         else {

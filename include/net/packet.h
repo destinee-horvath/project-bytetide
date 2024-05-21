@@ -13,15 +13,14 @@
 #define PKT_MSG_PNG 0xFF
 #define PKT_MSG_POG 0x00
 
-
 union btide_payload {
     uint8_t data[PAYLOAD_MAX];
-
 };
 
+//packet to be sent 
 struct btide_packet {
     uint16_t msg_code;
-    uint16_t error
+    uint16_t error;
     union btide_payload pl;
 };
 

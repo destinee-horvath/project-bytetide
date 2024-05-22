@@ -189,7 +189,11 @@ int connect_peer(struct all_peers** all_peers, char* address, int port) {
  *      struct all_peers** : all_peers
 */
 void print_peers(struct all_peers** all_peers) {
-    printf("Connected to:\n");
+    if ((*all_peers)->size == 0) {
+        printf("Not connected to any peers\n");
+        return;
+    }
+    printf("Connected to:\n\n");
     for (int i = 0; i < (*all_peers)->size; i++) {
         char addr_str[INET_ADDRSTRLEN];
         
@@ -236,7 +240,7 @@ void disconnect_peer(struct all_peers** all_peers, char* address, int port) {
 
     printf("Disconnected from peer\n");
     if ((*all_peers)->size == 0) {
-        // printf("Not connected to any peers\n");
+        printf("Not connected to any peers\n");
     } 
     else {
         print_peers(all_peers);

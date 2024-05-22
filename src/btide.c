@@ -104,8 +104,6 @@ int make_server(char* address, int port, int max) {
         exit(EXIT_FAILURE);
     }
 
-    printf("server listening for %s:%d\n", address, port);
-
     return server_fd;
 }
 

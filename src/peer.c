@@ -193,7 +193,7 @@ void print_peers(struct all_peers** all_peers) {
         printf("Not connected to any peers\n");
         return;
     }
-
+    
     printf("Connected to:\n\n");
     for (int i = 0; i < (*all_peers)->size; i++) {
         char addr_str[INET_ADDRSTRLEN];

@@ -21,10 +21,15 @@ struct all_peers {
     int max_peers;
 };
 
+void add_peer(struct all_peers**, struct peer_obj*);
 
-int connect_peer(struct all_peers**, char*, int);
+void remove_peer(struct all_peers**, int);
+
+int find_peer(struct all_peers**, char*, int);
 
 int accept_connect(int, struct all_peers**);
+
+int connect_peer(struct all_peers**, char*, int);
 
 void print_peers(struct all_peers**);
 

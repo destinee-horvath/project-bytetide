@@ -35,7 +35,7 @@ merkletree: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletre
 
 # Required for Part 2 - Make sure it outputs `btide` file
 # in your directory ./	
-btide: src/btide.c src/config.c src/package.c src/peer.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c 
+btide: src/btide.c src/config.c src/package.c src/peer.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
 
 # Alter your build for p1 tests to build unit-tests for your

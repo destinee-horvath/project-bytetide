@@ -191,6 +191,7 @@ int main(int argc, char** argv) {
                     break;
                     
                 case 0: //QUIT
+                    destroy_peers(&all_peers);
                     exit(0);
 
                 case 1: //CONNECT

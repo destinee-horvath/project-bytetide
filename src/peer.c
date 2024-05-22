@@ -220,10 +220,10 @@ void disconnect_peer(struct all_peers** all_peers, char* address, int port) {
         return;
     }
 
-    int peer_index = find_peer(&all_peers, address, port);
+    int peer_index = find_peer(all_peers, address, port);
     if (peer_index == -1) {
         printf("Peer not found\n");
-        break;
+        return;
     }
 
     struct peer_obj* peer = (*all_peers)->peers[peer_index];

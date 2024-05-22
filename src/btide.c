@@ -207,7 +207,14 @@ int main(int argc, char** argv) {
                     }
 
                     port = atoi(port_str);
-                    connect_peer(&all_peers, address, port);
+                    int res = connect_peer(&all_peers, address, port);
+                    if (res > -1) {
+                        printf("Connection established with peer\n");
+                        print_peers(&all_peers);
+                    }
+                    else {
+                        printf("Failed to connect peer\n");
+                    }
                     break;
 
                 case 2: //DISCONNECT
@@ -224,7 +231,17 @@ int main(int argc, char** argv) {
                     }
 
                     port = atoi(port_str);
+
+                    //check if peer exists
+                    int peer_index = find_peer(&all_peers, address, port);
+                    if (peer_index == -1) {
+                        printf("Peer not found\n");
+                        break;
+                    }
                     disconnect_peer(&all_peers, address, port);
+
+                    printf("Disconnected from peer\n");
+                    print_peers(&all_peers);
                     break;
 
                 case 3: //PEERS

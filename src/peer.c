@@ -177,8 +177,8 @@ int connect_peer(struct all_peers** all_peers, char* address, int port) {
 
     add_peer(all_peers, new_peer);
 
-    printf("Connection established with peer\n");
-    print_peers(all_peers);
+    // printf("Connection established with peer\n");
+    // print_peers(all_peers);
 
     return sock_fd;
 }
@@ -193,7 +193,7 @@ void print_peers(struct all_peers** all_peers) {
         printf("Not connected to any peers\n");
         return;
     }
-    
+
     printf("Connected to:\n\n");
     for (int i = 0; i < (*all_peers)->size; i++) {
         char addr_str[INET_ADDRSTRLEN];
@@ -220,10 +220,10 @@ void disconnect_peer(struct all_peers** all_peers, char* address, int port) {
         return;
     }
 
-    int peer_index = find_peer(all_peers, address, port);
+    int peer_index = find_peer(&all_peers, address, port);
     if (peer_index == -1) {
         printf("Peer not found\n");
-        return;
+        break;
     }
 
     struct peer_obj* peer = (*all_peers)->peers[peer_index];
@@ -239,8 +239,8 @@ void disconnect_peer(struct all_peers** all_peers, char* address, int port) {
 
     remove_peer(all_peers, peer->socket);
 
-    printf("Disconnected from peer\n");
-    print_peers(all_peers);
+    // printf("Disconnected from peer\n");
+    // print_peers(all_peers);
 }
 
 /**

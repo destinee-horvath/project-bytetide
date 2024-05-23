@@ -195,24 +195,24 @@ int connect_peer(struct all_peers** all_peers, char* address, int port) {
  * @params: 
  *      struct all_peers** : all_peers
 */
-// void print_peers(struct all_peers** all_peers) {
-//     if ((*all_peers)->size == 0) {
-//         printf("Not connected to any peers\n");
-//         return;
-//     }
+void print_peers(struct all_peers** all_peers) {
+    if ((*all_peers)->size == 0) {
+        printf("Not connected to any peers\n");
+        return;
+    }
     
-//     printf("Connected to:\n\n");
-//     for (int i = 0; i < (*all_peers)->size; i++) {
-//         char addr_str[INET_ADDRSTRLEN];
+    printf("Connected to:\n\n");
+    for (int i = 0; i < (*all_peers)->size; i++) {
+        char addr_str[INET_ADDRSTRLEN];
         
-//         //convert binary form of IP address to text form
-//         inet_ntop(AF_INET, &((*all_peers)->peers[i]->address.sin_addr), 
-//             addr_str, INET_ADDRSTRLEN);
+        //convert binary form of IP address to text form
+        inet_ntop(AF_INET, &((*all_peers)->peers[i]->address.sin_addr), 
+            addr_str, INET_ADDRSTRLEN);
         
-//         printf("%d. %s:%d\n", 
-//                 i + 1, addr_str, ntohs((*all_peers)->peers[i]->address.sin_port));
-//     }
-// }
+        printf("%d. %s:%d\n", 
+                i + 1, addr_str, ntohs((*all_peers)->peers[i]->address.sin_port));
+    }
+}
 
 /** 
  * - frees a peer to be disconnected (disconnect last peer)

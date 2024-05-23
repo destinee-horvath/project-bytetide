@@ -66,28 +66,6 @@ int command_handler(char* command) {
 }
 
 /**
- * - prints connections
-*/
-void print_peers() {
-    if ((all_peers)->size == 0) {
-        printf("Not connected to any peers\n");
-        return;
-    }
-    
-    printf("Connected to:\n\n");
-    for (int i = 0; i < (all_peers)->size; i++) {
-        char addr_str[INET_ADDRSTRLEN];
-        
-        //convert binary form of IP address to text form
-        inet_ntop(AF_INET, &((all_peers)->peers[i]->address.sin_addr), 
-            addr_str, INET_ADDRSTRLEN);
-        
-        printf("%d. %s:%d\n", 
-                i + 1, addr_str, ntohs((all_peers)->peers[i]->address.sin_port));
-    }
-}
-
-/**
  * - creates a server 
  * @params: 
  *      char*  : address
@@ -135,7 +113,7 @@ int make_server(char* address, int port, int max) {
  *      void* : arg
 */
 void *check_disconnection(void *arg) {
-    //need to continuously monitor disconnections
+    //need to continuously monitor all peers for disconnections
     while (1) {
         if (all_peers != NULL) {
             for (int i = 0; i < (*all_peers).size; i++) {
@@ -234,7 +212,7 @@ int main(int argc, char** argv) {
                     int res = connect_peer(&all_peers, address, port);
                     if (res > -1) {
                         printf("Connection established with peer\n");
-                        print_peers();
+                        print_peers(&all_peers);
                     }
                     else {
                         printf("Failed to connect peer\n");
@@ -262,14 +240,15 @@ int main(int argc, char** argv) {
                         printf("Peer not found\n");
                         break;
                     }
+
                     disconnect_peer(&all_peers, address, port);
 
                     printf("Disconnected from peer\n");
-                    print_peers();
+                    print_peers(&all_peers);
                     break;
 
                 case 3: //PEERS
-                    print_peers();
+                    print_peers(&all_peers);
                     break;
 
                 case 4: //ADDPACKAGE

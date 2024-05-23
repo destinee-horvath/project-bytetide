@@ -295,6 +295,8 @@ int main(int argc, char** argv) {
                     break;
                 
                 case 7: //FETCH
+                    destroy_all_packages(&all_packages);
+                    exit(0);
                     break;
 
                 default: 

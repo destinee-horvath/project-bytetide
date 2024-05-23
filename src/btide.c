@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
                     int res = connect_peer(&all_peers, address, port);
                     if (res > -1) {
                         printf("Connection established with peer\n");
-                        print_peers(&all_peers);
+                        // print_peers(&all_peers);
                     }
                     else {
                         printf("Failed to connect peer\n");
@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
                     disconnect_peer(&all_peers, address, port);
 
                     printf("Disconnected from peer\n");
-                    print_peers(&all_peers);
+                    // print_peers(&all_peers);
                     break;
 
                 case 3: //PEERS

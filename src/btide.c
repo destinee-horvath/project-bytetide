@@ -182,9 +182,10 @@ int main(int argc, char** argv) {
         int port;
 
         while (1) {
-            printf("%s\n", command);
             fgets(command, sizeof(command), stdin);
             command[strcspn(command, "\n")] = 0; 
+
+            printf("command: %s\n", command);
 
             switch (command_handler(command)) {
                 case -1: //invalid
@@ -266,6 +267,7 @@ int main(int argc, char** argv) {
                 default: 
                     printf("Unknown command\n");
                     break;
+            
 
             }
         }

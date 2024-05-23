@@ -185,8 +185,6 @@ int main(int argc, char** argv) {
             fgets(command, sizeof(command), stdin);
             command[strcspn(command, "\n")] = 0; 
 
-            printf("command: %s\n", command);
-
             switch (command_handler(command)) {
                 case -1: //invalid
                     printf("Invalid command\n");

@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
         int port;
 
         while (1) {
-            fprintf("%s\n", command);
+            printf("%s\n", command);
             fgets(command, sizeof(command), stdin);
             command[strcspn(command, "\n")] = 0; 
 

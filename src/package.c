@@ -123,7 +123,7 @@ void print_packages(struct all_packages* all_packages) {
         printf("%d. %.32s, %s : ", i + 1, pkg->identifier, pkg->filename);
 
         if (pkg->status == 1) {
-            printf("COMPLETE\n");
+            printf("COMPLETED\n");
         } else {
             printf("INCOMPLETE\n");
         }

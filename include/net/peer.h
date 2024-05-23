@@ -31,7 +31,7 @@ int accept_connect(int, struct all_peers**);
 
 int connect_peer(struct all_peers**, char*, int);
 
-void print_peers(struct all_peers**);
+// void print_peers(struct all_peers**);
 
 void disconnect_peer(struct all_peers**, char*, int);
 

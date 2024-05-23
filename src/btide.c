@@ -13,7 +13,7 @@
 // PART 2
 //
 
-pthread_mutex_t peers_mutex = PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutex_t peers_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct all_peers* all_peers;
 
 /**
@@ -81,7 +81,7 @@ int make_server(char* address, int port, int max) {
     //create socket file descriptor
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == 0) {
-        fprintf(stderr, "Error: socket failed");
+        fprintf(stderr, "Error: socket failed\n");
         exit(EXIT_FAILURE);
     }
 
@@ -92,14 +92,14 @@ int make_server(char* address, int port, int max) {
 
     //bind socket to address and port
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        fprintf(stderr, "Error: bind failed");
+        fprintf(stderr, "Error: bind failed\n");
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     //listen for incoming connections
     if (listen(server_fd, max) < 0) {
-        fprintf(stderr, "Error: listen failed");
+        fprintf(stderr, "Error: listen failed\n");
         close(server_fd);
         exit(EXIT_FAILURE);
     }
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
         int server = make_server(obj->dir, obj->port, obj->max_peers);
 
         //dynamically allocate space to store all peers 
-        struct all_peers* all_peers = malloc(sizeof(struct all_peers));
+        all_peers = malloc(sizeof(struct all_peers));
         if (all_peers == NULL) {
             fprintf(stderr, "Error: failed to allocate memory\n");
             return 1; 

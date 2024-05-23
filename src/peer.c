@@ -4,6 +4,8 @@
 #include "net/peer.h"
 #include "net/packet.h"
 
+pthread_mutex_t peers_mutex = PTHREAD_MUTEX_INITIALIZER; 
+
 /**
  * - adds a peer to all_peers
  * @params: 
@@ -11,6 +13,11 @@
  *      struct peer_obj*   : new_peer
 */
 void add_peer(struct all_peers** all_peers, struct peer_obj* new_peer) {
+    //nno new peer to add 
+    if (new_peer == NULL) {
+        return;
+    }
+
     if ((*all_peers)->size == (*all_peers)->max_peers) {
         printf("Error: max peers reached\n");
         close(new_peer->socket);

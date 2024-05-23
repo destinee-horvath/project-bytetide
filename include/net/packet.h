@@ -51,7 +51,7 @@ struct package {
     char* identifier;
 };
 
-void add_package(char*, struct all_packages**);
+void add_package(char*, struct all_packages**, char*);
 
 void remove_package(char*, struct all_packages**);
 

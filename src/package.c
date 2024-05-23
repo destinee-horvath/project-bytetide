@@ -7,7 +7,7 @@
  *      char*                  : filename
  *      struct all_packages**  : all_packages
 */
-void add_package(char* filename, struct all_packages** all_packages) {
+void add_package(char* filename, struct all_packages** all_packages, char* dir) {
     //bpkg file exists
     if (access(filename, F_OK) == 0) {
         //load
@@ -23,8 +23,17 @@ void add_package(char* filename, struct all_packages** all_packages) {
             return;
         }
         pkg->loaded_bpkg = obj;
-        
-        pkg->filename = strdup(obj->filename);
+
+        size_t path_len = strlen(dir) + 1 + strlen(obj->filename) + 1; 
+        pkg->filename = (char*)malloc(path_len);
+        if (pkg->filename == NULL) {
+            perror("Error: memory allocation failed");
+            free(pkg);
+            return;
+        }
+        snprintf(pkg->filename, path_len, "%s/%s", dir, obj->filename);
+
+        // pkg->filename = strdup(obj->filename);
         pkg->identifier = strdup(obj->identifier);
 
         //load data file 
@@ -106,7 +115,7 @@ void remove_package(char* ident_to_remove, struct all_packages** all_packages) {
 */
 void print_packages(struct all_packages* all_packages) {
     if (all_packages->size == 0) {
-        printf("No packages to print\n");
+        printf("No packages managed\n");
         return;
     }
     for (int i = 0; i < all_packages->size; i++) {

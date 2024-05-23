@@ -275,10 +275,10 @@ int main(int argc, char** argv) {
                         fprintf(stderr, "Error: failed to allocate memory");
                         break;
                     }
-                    
+
                     snprintf(file_path, path_len, "%s/%s", config->dir, token); //note add '/'
 
-                    add_package(file_path, &all_packages);
+                    add_package(file_path, &all_packages, config->dir);
 
                     free(file_path);
                     break;

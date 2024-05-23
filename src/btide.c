@@ -15,6 +15,7 @@
 
 // pthread_mutex_t peers_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct all_peers* all_peers;
+struct all_packages* all_packages;
 
 /**
  * - determines the command entered
@@ -147,34 +148,44 @@ int main(int argc, char** argv) {
         char* config_file = argv[1];
 
         //create a config_obj
-        struct config_obj* obj = load_config(config_file);
-        if (obj == NULL) {
+        struct config_obj* config = load_config(config_file);
+        if (config == NULL) {
             return 0;
         }
 
         //check if file has valid information (function exits if not valid)
-        check_config_obj(obj);
+        check_config_obj(config);
 
         //create socket 
-        int server = make_server(obj->dir, obj->port, obj->max_peers);
+        int server = make_server(config->dir, config->port, config->max_peers);
 
         //dynamically allocate space to store all peers 
         all_peers = malloc(sizeof(struct all_peers));
         if (all_peers == NULL) {
             fprintf(stderr, "Error: failed to allocate memory\n");
-            return 1; 
+            return 1;  
         }
 
         all_peers->peers = NULL;
         all_peers->size = 0;
-        all_peers->max_peers = obj->max_peers;
+        all_peers->max_peers = config->max_peers;
+
+        //dynamically allocate space for all packages 
+        all_packages = malloc(sizeof(struct all_packages));
+        if (all_packages == NULL) {
+            fprintf(stderr, "Error: failed to allocate memory\n");
+            return 1;  
+        }
+
+        all_packages->packages = NULL;
+        all_packages->size = 0;
 
         pthread_t accept_thread, monitor_thread;
         pthread_create(&accept_thread, NULL, accept_connections, &server);
         pthread_create(&monitor_thread, NULL, check_disconnection, NULL);
         
         
-        char command[BUFFER];
+        char command[COMMAND_BUFFER];
 
         char* token;
         char* address;
@@ -192,6 +203,7 @@ int main(int argc, char** argv) {
                     
                 case 0: //QUIT
                     // destroy_peers(&all_peers);
+                    destroy_all_packages(&all_packages);
                     exit(0);
 
                 case 1: //CONNECT
@@ -211,7 +223,6 @@ int main(int argc, char** argv) {
                     int res = connect_peer(&all_peers, address, port);
                     if (res > -1) {
                         printf("Connection established with peer\n");
-                        // print_peers(&all_peers);
                     }
                     else {
                         printf("Failed to connect peer\n");
@@ -243,7 +254,6 @@ int main(int argc, char** argv) {
                     disconnect_peer(&all_peers, address, port);
 
                     printf("Disconnected from peer\n");
-                    // print_peers(&all_peers);
                     break;
 
                 case 3: //PEERS
@@ -251,12 +261,37 @@ int main(int argc, char** argv) {
                     break;
 
                 case 4: //ADDPACKAGE
+                    token = strtok(command, " ");
+                    token = strtok(NULL, " ");   
+
+                    if (token == NULL) {
+                        printf("Missing arguments\n");
+                        break;
+                    }
+
+                    size_t path_len = strlen(config->dir) + 1 + strlen(token) + 1; // +1 '/' and +1 '\0'
+                    char* file_path = (char*)malloc(path_len);
+                    if (file_path == NULL) {
+                        fprintf(stderr, "Error: failed to allocate memory");
+                        break;
+                    }
+                    
+                    snprintf(file_path, path_len, "%s/%s", config->dir, token); //note add '/'
+
+                    add_package(file_path, &all_packages);
+
+                    free(file_path);
                     break;
 
                 case 5: //REMPACKAGE
+                    token = strtok(command, " ");
+                    token = strtok(NULL, " ");   
+
+                    remove_package(token, &all_packages);
                     break;
 
                 case 6: //PACKAGES
+                    print_packages(all_packages);
                     break;
                 
                 case 7: //FETCH
@@ -272,7 +307,7 @@ int main(int argc, char** argv) {
 
         destroy_peers(&all_peers);
         close(server);
-        destroy_config_obj(obj);
+        destroy_config_obj(config);
     }
 
     else {

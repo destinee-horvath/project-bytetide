@@ -7,8 +7,9 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
-#define BUFFER (516)
+#define BUFFER_CONFIG (516)
 #define MAX_LEN_DIR (256)
+#define COMMAND_BUFFER (2048)
 
 struct config_obj {
     char dir[MAX_LEN_DIR];

@@ -23,7 +23,7 @@ struct config_obj* load_config(char* filename) {
     }
     memset(config, 0, sizeof(struct config_obj)); //initialise space to 0
 
-    char buffer[BUFFER];
+    char buffer[BUFFER_CONFIG];
     //readd config
     while (fgets(buffer, sizeof(buffer), file)) {
         if (strncmp(buffer, "directory:", 10) == 0) {

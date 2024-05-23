@@ -59,9 +59,9 @@ int command_handler(char* command) {
     else if (strcmp(command, "PACKAGES") == 0) {
         return 6;
     } 
-    else if (strncmp(command, "FETCH ", 6) == 0) {
-        return 7;
-    } 
+    // else if (strncmp(command, "FETCH ", 6) == 0) {
+    //     return 7;
+    // } 
     
     return -1;
 }
@@ -294,10 +294,10 @@ int main(int argc, char** argv) {
                     print_packages(all_packages);
                     break;
                 
-                case 7: //FETCH
-                    destroy_all_packages(&all_packages);
-                    exit(0);
-                    break;
+                // case 7: //FETCH
+                //     destroy_all_packages(&all_packages);
+                //     exit(0);
+                //     break;
 
                 default: 
                     printf("Unknown command\n");

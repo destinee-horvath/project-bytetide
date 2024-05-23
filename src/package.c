@@ -6,6 +6,7 @@
  * @params:
  *      char*                  : filename
  *      struct all_packages**  : all_packages
+ *      char*                  : dir
 */
 void add_package(char* filename, struct all_packages** all_packages, char* dir) {
     //bpkg file exists
@@ -24,6 +25,7 @@ void add_package(char* filename, struct all_packages** all_packages, char* dir) 
         }
         pkg->loaded_bpkg = obj;
 
+        //concar dir to filename 
         size_t path_len = strlen(dir) + 1 + strlen(obj->filename) + 1; 
         pkg->filename = (char*)malloc(path_len);
         if (pkg->filename == NULL) {
@@ -47,6 +49,7 @@ void add_package(char* filename, struct all_packages** all_packages, char* dir) 
             pkg->status = 0;
         }
 
+        //destroy bpkg query and obj
         bpkg_query_destroy(&all_chunks_data);
         bpkg_obj_destroy(obj);
 

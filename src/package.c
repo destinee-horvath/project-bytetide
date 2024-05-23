@@ -23,7 +23,8 @@ void add_package(char* filename, struct all_packages** all_packages) {
             return;
         }
         pkg->loaded_bpkg = obj;
-        pkg->filename = strdup(filename);
+        
+        pkg->filename = strdup(obj->filename);
         pkg->identifier = strdup(obj->identifier);
 
         //load data file 
@@ -110,7 +111,7 @@ void print_packages(struct all_packages* all_packages) {
     }
     for (int i = 0; i < all_packages->size; i++) {
         struct package* pkg = all_packages->packages[i];
-        printf("%d. %s, %s : ", i + 1, pkg->identifier, pkg->filename);
+        printf("%d. %.32s, %s : ", i + 1, pkg->identifier, pkg->filename);
 
         if (pkg->status == 1) {
             printf("COMPLETE\n");

@@ -387,6 +387,10 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
     for (size_t i = 0; i < bpkg->len_chunk; i++) {
         child_nodes[i] = make_node(NULL, NULL, 1);
         if (child_nodes[i] == NULL) {
+            for (size_t j = 0; j < i; j++) {
+                destroy_tree_node(child_nodes[j]);
+            }
+            free(child_nodes);
             return qry;
         }
     }
@@ -394,6 +398,10 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
     //read data into space allocated to child nodes
     size_t ret = read_data(&child_nodes, bpkg);
     if (ret == 1) {
+        for (size_t i = 0; i < bpkg->len_chunk; i++) {
+            destroy_tree_node(child_nodes[i]);
+        }
+        free(child_nodes);
         return qry;
     }
 
@@ -435,17 +443,14 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
         char** all_leafs = malloc(bpkg->len_chunk * sizeof(char*));
         if (all_leafs == NULL) {
             destroy_tree(tree);
+            free(qry.hashes);
+            for (size_t i = 0; i < bpkg->len_chunk; i++) {
+                destroy_tree_node(child_nodes[i]);
+            }
+            free(child_nodes);
             fprintf(stderr, "Error: Memory allocation failed");
             return qry;
         }
-
-        // for (size_t i = 0; i < bpkg->len_chunk; i++) {
-        //     all_leafs[i] = malloc(HASH_SIZE * sizeof(char));
-        //     if (all_leafs[i] == NULL) {
-        //         fprintf(stderr, "Error: Memory allocation failed");
-        //         return qry;
-        //     }
-        // }
 
         size_t tmp_count = 0;
         get_leaf_hashes(tree->root, &all_leafs, &tmp_count);
@@ -462,7 +467,20 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
                     char** tmp = realloc(qry.hashes, (count + 1) * sizeof(char*));
                     if (tmp == NULL) { 
                         fprintf(stderr, "Error: Memory allocation failed\n");
-                        break;
+                        for (size_t k = 0; k < count; k++) {
+                            free(qry.hashes[k]);
+                        }
+                        free(qry.hashes);
+                        destroy_tree(tree);
+                        for (size_t k = 0; k < bpkg->len_chunk; k++) {
+                            destroy_tree_node(child_nodes[k]);
+                        }
+                        free(child_nodes);
+                        for (size_t k = 0; k < tmp_count; k++) {
+                            free(all_leafs[k]);
+                        }
+                        free(all_leafs);
+                        return qry;
                     } 
 
                     //allocate space
@@ -472,7 +490,20 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
                     qry.hashes[count] = malloc(HASH_SIZE * sizeof(char));
                     if (qry.hashes[count] == NULL) { 
                         fprintf(stderr, "Error: Memory allocation failed\n");
-                        break;
+                        for (size_t k = 0; k < count; k++) {
+                            free(qry.hashes[k]);
+                        }
+                        free(qry.hashes);
+                        destroy_tree(tree);
+                        for (size_t k = 0; k < bpkg->len_chunk; k++) {
+                            destroy_tree_node(child_nodes[k]);
+                        }
+                        free(child_nodes);
+                        for (size_t k = 0; k < tmp_count; k++) {
+                            free(all_leafs[k]);
+                        }
+                        free(all_leafs);
+                        return qry;
                     }
 
                     //copy

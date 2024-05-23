@@ -513,3 +513,18 @@ void get_root_from_hash(struct merkle_tree_node* node, struct merkle_tree_node**
 
     get_root_from_hash(node->right, node_with_hash, hash);
 }
+
+/**
+ * - prints the hashes in the tree
+*/
+void print_tree(struct merkle_tree_node* node) {
+    if (node == NULL) {
+        return;
+    }
+
+    print_tree(node->left);
+
+    printf("%s\n", node->computed_hash);
+
+    print_tree(node->right);
+}

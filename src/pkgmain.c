@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 			test_make_tree(obj);
 		}
 		else if (argselect == 8) {
-			//print return of reading data file 
+			test_read_data(obj);
 		}
         else {
 			puts("Argument is invalid");

@@ -61,4 +61,6 @@ void traverse_subtree_hashes(struct merkle_tree_node*, char***, size_t*);
 void find_subtree_chunks(struct merkle_tree_node* , char***, size_t*);
 
 void get_root_from_hash(struct merkle_tree_node* , struct merkle_tree_node** , char*);
+
+void print_tree(struct merkle_tree_node*);
 #endif

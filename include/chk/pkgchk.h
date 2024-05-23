@@ -119,5 +119,7 @@ void bpkg_obj_destroy(struct bpkg_obj* obj);
 
 void test_make_tree(struct bpkg_obj* bpkg);
 
+void test_read_data(struct bpkg_obj* bpkg);
+
 #endif
 

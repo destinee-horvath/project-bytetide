@@ -415,6 +415,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
     if (strcmp(tree->root->computed_hash, bpkg->hashes[0]) == 0) {
         qry.hashes = malloc(bpkg->len_chunk * sizeof(char*));
         if (qry.hashes == NULL) {
+            destroy_tree(tree);
             fprintf(stderr, "Error: Memory allocation failed");
             return qry;
         }
@@ -433,6 +434,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
         char** all_leafs = malloc(bpkg->len_chunk * sizeof(char*));
         if (all_leafs == NULL) {
+            destroy_tree(tree);
             fprintf(stderr, "Error: Memory allocation failed");
             return qry;
         }
@@ -875,6 +877,53 @@ void test_make_tree(struct bpkg_obj* bpkg) {
 
 
 void test_read_data(struct bpkg_obj* bpkg) {
+    if (!bpkg || !bpkg->chunks_hash) {
+        fprintf(stderr, "Error\n");
+        return;
+    }
 
-    //free nodes
+    struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+    if (!child_nodes) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return;
+    }
+
+    //make leaf nodes
+    for (size_t i = 0; i < bpkg->len_chunk; i++) {
+        child_nodes[i] = make_node(NULL, NULL, 1);
+        if (!child_nodes[i]) {
+            fprintf(stderr, "Error: Failed to create node\n");
+            for (size_t j = 0; j < i; j++) {
+                free(child_nodes[j]);
+            }
+            free(child_nodes);
+            return;
+        }
+        strncpy(child_nodes[i]->computed_hash, bpkg->chunks_hash[i], HASH_SIZE);
+        child_nodes[i]->computed_hash[HASH_SIZE] = '\0';
+    }
+
+    //build tree 
+    struct merkle_tree* tree = malloc(sizeof(struct merkle_tree));
+    if (!tree) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        for (size_t i = 0; i < bpkg->len_chunk; i++) {
+            free(child_nodes[i]);
+        }
+        free(child_nodes);
+        return;
+    }
+
+    build_merkle_tree(child_nodes, bpkg, &tree);
+
+    if (tree && tree->root) {
+        print_tree(tree->root);
+    } 
+    else {
+        fprintf(stderr, "Error: Failed to build tree\n");
+    }
+
+    destroy_tree(tree);
+    free(child_nodes);
+
 }

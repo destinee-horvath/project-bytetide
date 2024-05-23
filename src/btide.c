@@ -294,10 +294,10 @@ int main(int argc, char** argv) {
                     print_packages(all_packages);
                     break;
                 
-                // case 7: //FETCH
-                //     destroy_all_packages(&all_packages);
-                //     exit(0);
-                //     break;
+                case 7: //FETCH (not attempted, behaves same as QUIT)
+                    destroy_all_packages(&all_packages);
+                    exit(0);
+                    break;
 
                 default: 
                     printf("Unknown command\n");

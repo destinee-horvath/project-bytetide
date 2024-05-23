@@ -11,16 +11,6 @@ BINDIR=bin
 # Required for Part 1 - Make sure it outputs a .o file
 # to either objs/ or ./
 # In your directory
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-
-#all .c, .o files go to obj directory
-$(OBJDIR)/%.o: src/%.c | $(OBJDIR)
-	$(CC) -c $< $(INCLUDE) $(CFLAGS) -o $@
-
-$(OBJDIR)/chk $(OBJDIR)/crypt $(OBJDIR)/tree:
-	mkdir -p $@
-
 pkgchk.o: src/chk/pkgchk.c
 	$(CC) -c $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS)
 
@@ -29,9 +19,7 @@ pkgchecker: src/pkgmain.c src/chk/pkgchk.c
 
 pkgmain: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
 	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
-
-merkletree: src/pkgmain.c src/chk/pkgchk.c src/crypt/sha256.c src/tree/merkletree.c
-	$(CC) $^ $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o $@
+	./pkgmain resources/pkgs/file1.bpkg -chunk_check file1.data
 
 # Required for Part 2 - Make sure it outputs `btide` file
 # in your directory ./	

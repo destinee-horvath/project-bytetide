@@ -1,6 +1,3 @@
-//handle server and client communication
-//handle packets 
-
 #include "net/peer.h"
 #include "net/packet.h"
 

@@ -8,13 +8,6 @@
 #include <unistd.h>
 #include "chk/pkgchk.h"
 
-#include <sys/stat.h>
-#include <errno.h>
-#include <limits.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <limits.h>
-
 
 #define PAYLOAD_MAX (4092)
 

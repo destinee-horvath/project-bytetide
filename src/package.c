@@ -55,7 +55,8 @@ void add_package(char* filename, struct all_packages** all_packages, char* dir) 
 
         //store in all_packages 
         (*all_packages)->size += 1;
-        (*all_packages)->packages = (struct package**)realloc((*all_packages)->packages, (*all_packages)->size * sizeof(struct package*));
+        (*all_packages)->packages = (struct package**)realloc((*all_packages)->packages, 
+                                                                    (*all_packages)->size * sizeof(struct package*));
         if ((*all_packages)->packages == NULL) {
             perror("Error: memory reallocation failed");
             free(pkg->filename);
@@ -98,7 +99,9 @@ void remove_package(char* ident_to_remove, struct all_packages** all_packages) {
 
             //decrease memory
             (*all_packages)->size--;
-            (*all_packages)->packages = (struct package**)realloc((*all_packages)->packages, (*all_packages)->size * sizeof(struct package*));
+            (*all_packages)->packages = (struct package**)realloc((*all_packages)->packages, 
+                                                                        (*all_packages)->size * sizeof(struct package*));
+
             if ((*all_packages)->packages == NULL && (*all_packages)->size > 0) {
                 perror("Error: memory allocation failed");
             }

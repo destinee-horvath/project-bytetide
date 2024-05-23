@@ -9,9 +9,6 @@
 
 #include <sys/stat.h> //for stat to check if file exists
 
-// PART 1
-
-
 /**
  * Loads the package for when a valid path is given
  */
@@ -230,13 +227,13 @@ struct bpkg_obj* bpkg_load(const char* path) {
 
 /**
  * flag: -file_check
- * Checks to see if the referenced filename in the bpkg file
- * exists or not.
- * @param bpkg, constructed bpkg object
- * @return query_result, a single string should be
- *      printable in hashes with len sized to 1.
- * 		If the file exists, hashes[0] should contain "File Exists"
- *		If the file does not exist, hashes[0] should contain "File Created"
+ * - checks if the referenced filename in the bpkg file exists
+ * @param 
+ *      struct bpkg_obj*  : bpkg
+ * @return 
+ *      struct bpkg_query : query_result
+ * 		    If the file exists, hashes[0] contains "File Exists"
+ *          If the file does not exist, hashes[0] contains "File Created"
  */
 struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
     struct bpkg_query query_result;
@@ -303,10 +300,12 @@ struct bpkg_query bpkg_file_check(struct bpkg_obj* bpkg) {
 
 /**
  * flag: -all_hashes
- * Retrieves a list of all hashes within the package/tree
- * @param bpkg, constructed bpkg object
- * @return query_result, This structure will contain a list of hashes
- * 		and the number of hashes that have been retrieved
+ * - retrieves a list of all hashes within the package/tree
+ * @param 
+ *      - struct bpkg_obj*  : bpkg 
+ * @return 
+ *      - struct bpkg_query : query_result
+ *           structure contains a list of hashes and the number of hashes retrieved
  */
 struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
     struct bpkg_query qry = { 0 };
@@ -362,10 +361,13 @@ struct bpkg_query bpkg_get_all_hashes(struct bpkg_obj* bpkg) {
 
 /**
  * flag: -chunk_check
- * Retrieves all completed chunks of a package object
- * @param bpkg, constructed bpkg object
- * @return query_result, This structure will contain a list of hashes
- * 		and the number of hashes that have been retrieved
+ * - retrieves all completed chunks of a package object
+ * - completed chunks: leaf nodes in merkletree that match chunks in .bpkg file
+ * @param 
+ *      - struct bpkg_obj*  : bpkg 
+ * @return 
+ *      - struct bpkg_query : query_result
+ *          This structure contains a list of hashes and the number of hashes retrieved
  */
 struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) { 
     struct bpkg_query qry = { 0 };
@@ -378,6 +380,7 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
     //dynamically allocate space to store child nodes 
     struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+    
     if (!child_nodes) {
         fprintf(stderr, "Error: Failed to allocate memory\n");
         return qry;
@@ -429,7 +432,6 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
         }
         //copy bpkg chunks to hash 
         for (size_t i = 0; i < bpkg->len_chunk; i++) {
-            // qry.hashes[i] = malloc(HASH_SIZE * sizeof(char));
             qry.hashes[i] = strdup(bpkg->chunks_hash[i]);
         }
         qry.len = bpkg->len_chunk;
@@ -526,26 +528,20 @@ struct bpkg_query bpkg_get_completed_chunks(struct bpkg_obj* bpkg) {
 
     destroy_tree(tree);
 
-    // for (size_t i = 0; i < bpkg->len_chunk; i++) {
-    //     free(child_nodes[i]);
-    // }
-    // free(child_nodes);
     return qry;
 }
 
 
 /**
  * flag: -min_hashes
- * Gets the mininum of hashes to represented the current completion state
- * Example: If chunks representing start to mid have been completed but
- * 	mid to end have not been, then we will have (N_CHUNKS/2) + 1 hashes
- * 	outputted
+ * - gets the mininum of hashes to represented the current completion state
+ * - gets all the roots of a completed subtree 
  *
- * @param bpkg, constructed bpkg object
- * @return query_result, This structure will contain a list of hashes
- * 		and the number of hashes that have been retrieved
- * 
- * Returns root of subtree with correct hash
+ * @param 
+ *      - struct bpkg_obj*  : bpkg 
+ * @return 
+ *      - struct bpkg_query : query_result
+ *              contains a list of hashes and the number of hashes retrieved
  */
 struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) { 
     struct bpkg_query qry = { 0 };
@@ -556,7 +552,7 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
     }
 
     //dynamically allocate space to store child nodes 
-    struct merkle_tree_node** child_nodes = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
+    struct merkle_tree_node** child_nodes  = malloc(bpkg->len_chunk * sizeof(struct merkle_tree_node*));
     if (!child_nodes) {
         fprintf(stderr, "Error: Failed to allocate memory\n");
         return qry; 
@@ -638,15 +634,12 @@ struct bpkg_query bpkg_get_min_completed_hashes(struct bpkg_obj* bpkg) {
 
 /**
  * flag: -hashes_of
- * Retrieves all chunk hashes given a certain an ancestor hash (or itself)
- * Example: If the root hash was given, all chunk hashes will be outputted
- * 	If the root's left child hash was given, all chunks corresponding to
- * 	the first half of the file will be outputted
- * 	If the root's right child hash was given, all chunks corresponding to
- * 	the second half of the file will be outputted
- * @param bpkg, constructed bpkg object
- * @return query_result, This structure will contain a list of hashes
- * 		and the number of hashes that have been retrieved
+ *  - retrieves all chunk hashes (child nodes) given a certain an ancestor hash (or itself)
+ * @param 
+ *      - struct bpkg_obj*  : bpkg 
+ * @return 
+ *      - struct bpkg_query : query_result
+ *              contains a list of hashes and the number of hashes retrieved
  */
 struct bpkg_query bpkg_get_all_chunk_hashes_from_hash(struct bpkg_obj* bpkg, 
     char* hash) {
@@ -906,7 +899,11 @@ void test_make_tree(struct bpkg_obj* bpkg) {
 
 }
 
-
+/**
+ * - used to test reading a data file 
+ * @params: 
+ *      - struct bpkg_obj* : bpkg 
+*/
 void test_read_data(struct bpkg_obj* bpkg) {
     if (!bpkg || !bpkg->chunks_hash) {
         fprintf(stderr, "Error\n");

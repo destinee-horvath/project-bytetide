@@ -9,11 +9,7 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
-//
-// PART 2
-//
 
-// pthread_mutex_t peers_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct all_peers* all_peers;
 struct all_packages* all_packages;
 
@@ -202,7 +198,6 @@ int main(int argc, char** argv) {
                     break;
                     
                 case 0: //QUIT
-                    // destroy_peers(&all_peers);
                     destroy_all_packages(&all_packages);
                     exit(0);
 

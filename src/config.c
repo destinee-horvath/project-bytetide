@@ -1,4 +1,3 @@
-//configuration logic 
 #include "net/config.h"
 
 /**

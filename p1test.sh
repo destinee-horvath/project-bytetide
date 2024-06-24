@@ -2,7 +2,7 @@
 
 cd tests
 
-#to run all the tests in test folder 
+#to run all the tests in test folder
 for i in {1..10}
 do
     cd "test$i"
